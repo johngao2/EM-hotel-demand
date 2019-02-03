@@ -1,5 +1,3 @@
-# README
-
 ## Objective
 Run logit model from scratch to forecast customer preferences given product assortments at each time step, **and do it quick**. Transaction data will be drawn/simulated based on a known distribution with reasonable parameters, or just taken from another paper. Then I'll run the same data through an EM algorithm, and compare.
 
