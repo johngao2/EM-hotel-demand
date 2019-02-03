@@ -17,5 +17,5 @@ wip
 ### The Math: Simple Logit
 wip
 
-## The Math: EM Algorithm
+### The Math: EM Algorithm
 wip
