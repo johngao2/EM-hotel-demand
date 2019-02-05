@@ -4,11 +4,11 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "echo",
+            "label": "build example solver",
             "type": "shell",
             "command": "g++",
             "args": [
-                "example_from_doc.cpp"
+                "-o", "solver", "tests/calc_and_solve_example.cpp"
             ]
         }
     ]
