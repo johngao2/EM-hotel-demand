@@ -12,7 +12,7 @@ IPOPT: A fast, open source non-linear programming solver. https://projects.coin-
 CPPAD: A fast, open source package for computing derivatives. https://coin-or.github.io/CppAD/doc/cppad.htm, https://github.com/coin-or/CppAD
 
 ### Data Format
-Panel data. Each timestep contains multiple rows, each row representing a product ID which is available at that time. Each product will have fields for price, and # purchased in that time period, which is the target variable.
+Panel data. Each timestep contains multiple rows, each row representing a product ID which is available at that time. Each product will have fields for price, and # purchased in that time period (target variable)
 
 ### The Math: Simple Logit
 wip
