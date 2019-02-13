@@ -8,7 +8,11 @@
             "type": "shell",
             "command": "g++",
             "args": [
-                "-o", "solver", "tests/calc_and_solve_example.cpp"
+                "-o", "solver", "tests/examples/get_started.cpp",
+                "-I. -I$(top_srcdir) $(BOOST_INCLUDE) $(EIGEN_INCLUDE) -I$(IPOPT_DIR)/include",
+                "-I/Users/johngao/work/thesis/cppad.svn/trunk/cppad_ipopt/src",
+                "-lcppad_ipopt $(CPPAD_IPOPT_LIBS) $(FCLIBS) $(PTHREAD_LIB) $(DL_LIB) AM_LDFLAGS",
+                "-L/Users/johngao/work/thesis/cppad.svn/trunk/cppad_ipopt/src"
             ]
         }
     ]
