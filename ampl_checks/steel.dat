@@ -1,0 +1,9 @@
+data;
+
+set PROD := bands coils;
+
+param:    rate  profit  market :=
+  bands    1.98588171e-06 3.98875004e-05 2.94730978e-04
+  coils    140    30     4000 ;
+
+param avail := 40;
