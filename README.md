@@ -1,5 +1,5 @@
 ## Current Objective (subject to change):
-Run simple logit model from scratch to forecast customer preferences given product assortments at each time step, **and do it quick**. Transaction data is simulated. Hoping to do the same with Multinomial Logit and Expectation-Maximization in the future.
+Implement EM algorithm (https://pubsonline.informs.org/doi/pdf/10.1287/opre.2016.1559) to forecast customer preferences given product assortments at each time step, **and do it quick**. Transaction data is simulated.
 
 ### Tools:
 IPOPT: Fast open source non-linear programming solver. https://projects.coin-or.org/Ipopt, https://github.com/coin-or/Ipopt
