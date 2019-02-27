@@ -1,6 +1,5 @@
 // Actually a logit exercise
 // Works with example solver
-// BEGIN C++
 #include <cppad/ipopt/solve.hpp>
 #include <iostream>
 #include <math.h>
@@ -176,4 +175,3 @@ bool get_started(void)
 
 	return ok;
 }
-// END C++
