@@ -1,5 +1,7 @@
-## Current Objective (subject to change):
-Implement EM algorithm (van Ryzin, Vulcano 2017) to forecast customer preferences given product assortments at each time step, **and do it quick**. Transaction data is simulated.
+## Project Overview:
+~~Step 1: Implement simple multinomial logit go get familiar with likelihood maximization using CppAD and IPOPT packages.~~ **- Done**  
+Step 2: Replicate EM algorithm (van Ryzin, Vulcano 2017) on transaction data to forecast customer preferences given product assortments at each time step, **and do it quick**. Use on simulated and real datasets, and compare results with original paper.  
+Step 3: Extend van Ryzin & Vulcano to include seasonality and be fast enough to work on hotel problems where the assortment size is gigantic.
 
 ## Background:  
 **Newer, problem-specific EM algorithm (what I'm trying to reproduce and extend):**  
