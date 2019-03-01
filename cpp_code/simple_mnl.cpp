@@ -50,8 +50,8 @@ class FG_eval
 
 		//populate cost and price matrices
 		//data needs to be sorted by time, then by option ID
-		AD<double>prices[n_times][n_options] = {{0}}; //price matrix
-		AD<double>counts[n_times][n_options] = {{0}}; //count matrix
+		AD<double> prices[n_times][n_options] = {{0}}; //price matrix
+		AD<double> counts[n_times][n_options] = {{0}}; //count matrix
 		int t;
 		int i;
 		for (int s = 0; s < n_samples; s++)
@@ -112,7 +112,7 @@ class FG_eval
 };
 } // namespace
 
-bool get_started(void)
+int main()
 {
 	bool ok = true;
 	size_t i;

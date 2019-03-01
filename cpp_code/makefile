@@ -4,12 +4,12 @@ LIBS = 	-L/Users/johngao/work/thesis/CoinIpopt/build/lib	\
 		-L/usr/local/lib/gcc/5 \
 		-lgfortran -lm -lquadmath
 
-INCS = 	-I/home/mnediak/CoinIpopt/build/include/coin/ThirdParty	\
-		-I/home/mnediak/CoinIpopt/build/include 				\
-		-I/home/mnediak/include
+INCS = 	-I/Users/johngao/work/thesis/CoinIpopt/build/include/coin/ThirdParty	\
+		-I/Users/johngao/work/thesis/CoinIpopt/build/include 				\
+		-I/usr/local/include
 
-get_started.o: get_started.cpp
+simple_mnl.o: simple_mnl.cpp
 	g++ -c get_started.cpp ${INCS}
 
-get_started: get_started.o
-	g++ -o get_started get_started.o ${LIBS}
+simple_mnl: simple_mnl.o
+	g++ -o simple_mnl simple_mnl.o ${LIBS}
