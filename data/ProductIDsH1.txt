@@ -1,0 +1,10 @@
+1, King Room 2,  287
+2, King Room 3, 346
+3, King Room 4, 402
+4, 2 Double Beds Room 1, 335
+5, Queen Room 1, 294
+6, Queen Room 2, 388
+7, Suite 1, 419
+8, Suite 2, 483
+9, Special Type Room 1, 360
+10, King Room 1, 315

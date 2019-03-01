@@ -1,0 +1,12 @@
+1, Standard Room, 162
+2, King Room 3 Smoking, 135
+3, King Room 3 Non-Smoking, 136
+4, King Room 1 Smoking, 145
+5, King Room 1 Non-Smoking, 144
+6, King Room 2 Non-Smoking, 150
+7, 2 Queen Beds Room 1 Smoking, 144
+8, 2 Queen Beds Room 1 Non-Smoking, 148
+9, 2 Queen Beds Room 2 Non-Smoking, 138
+10, Suite 1 Smoking, 159
+11, Suite 1 Non-Smoking, 159
+12, 2 Queen Beds Room 2 Smoking, 135

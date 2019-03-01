@@ -1,0 +1,21 @@
+Data description for the Hotel Example in Section 5.2. 
+
+The data is the outcome of processing the files described in Bodea et al. (2009). Our processing criteria is outlined in the main body of the paper.
+
+
+The following parameters apply: n (number of products), N (number of customer types), T (number of periods).
+
+
+For each Hotel Hi, i=1,...,5, the following text files are available:
+
+ProductIDsHi.txt: List of records, with one row per hotel product (i.e., room type). Each record is of the form: (product label, description, average price).
+
+PrefListsBuyUpHi.txt: Description of the customer types for the buy-up case. Matrix of (n+1) rows and N columns. Column k corresponds to the description 
+of customer type k, so that position (1,k) has the prodcut label of the top choice for customer type k, position (2,k) has the second choice for 
+customer type k, and so on. The type (i.e., column in the matrix) is an ordered list of up to n product labels, and is filled with zeroes up to row n+1.
+
+PrefListsIndepHi.txt: Description of the customer types for the independent demand case. Structure similar to the file PrefListsBuyUpHi.txt.
+
+AvailabilityHi.txt: Matrix with n rows and T columns. Position (j,t) has a 1 if product j is available in period t, and 0 otherwise.
+
+TransactionsHi.txt: Row vector with T positions. Position t has the product label corresponding to the transaction observed in period t.
