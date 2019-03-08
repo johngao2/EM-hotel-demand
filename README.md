@@ -10,7 +10,8 @@ Step 3: Extend van Ryzin & Vulcano to include seasonality and be fast enough to 
 van Ryzin, G., & Vulcano, G. (2017). "Technical Note: an Expectation-Maximization Method to
 Estimate a Rank-based Choice Model of Demand", *Operations Research 65 (2017), no. 2*, 396–407. Retrieved from https://pubsonline.informs.org/doi/pdf/10.1287/opre.2016.1559
 
-Supplemental material: https://pubsonline.informs.org/doi/suppl/10.1287/opre.2016.1559/suppl_file/opre.2016.1559-sm.pdf
+Supplemental material: https://pubsonline.informs.org/doi/suppl/10.1287/opre.2016.1559 
+(Test data also comes from here)
 
 **Original EM paper:**  
 Dempster, A., Laird, N., & Rubin, D. (1977). "Maximum Likelihood from Incomplete Data via the EM Algorithm". *Journal of the Royal Statistical Society. Series B (Methodological), 39(1)*, 1-38. Retrieved from http://www.jstor.org/stable/2984875
