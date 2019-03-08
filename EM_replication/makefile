@@ -6,9 +6,10 @@ LIBS = 	-L/Users/johngao/work/thesis/CoinIpopt/build/lib		\
 
 INCS = 	-I/Users/johngao/work/thesis/CoinIpopt/build/include/coin/ThirdParty	\
 		-I/Users/johngao/work/thesis/CoinIpopt/build/include 					\
+		-I/Users/johngao/work/thesis/fast-cpp-csv-parser
 
-simple_mnl.o: simple_mnl.cpp
-	g++ -c simple_mnl.cpp ${INCS}
+EM_test.o: EM_test.cpp
+	g++ -std=c++0x -c EM_test.cpp ${INCS}
 
-simple_mnl: simple_mnl.o
-	g++ -o simple_mnl simple_mnl.o ${LIBS}
+EM_test: EM_test.o
+	g++ -std=c++0x -o EM_test EM_test.o ${LIBS}
