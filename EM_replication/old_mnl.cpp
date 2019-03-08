@@ -12,6 +12,10 @@ namespace
 {
 using CppAD::AD;
 
+void helloworld(){
+	std::cout << "REEEEEEEEE" << std::endl;
+}
+
 class FG_eval
 {
   public:
