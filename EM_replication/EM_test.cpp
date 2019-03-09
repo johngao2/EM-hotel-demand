@@ -42,24 +42,23 @@ template <typename T>
 void printMatrix(T mat, std::size_t N, std::size_t M, int width)
 {
 	std::cout << "\n Printing Matrix : \n";
-	for (int i = 0; i < N; i++)
+	std::cout << "M:" << M << std::endl;
+	if (M == 1)
 	{
-		for (int j = 0; j < M; j++)
-			std::cout << std::setw(width) << mat[i][j] << std::setw(width);
-		std::cout << std::endl;
+		for (int i = 0; i < N; i++)
+		{
+			std::cout << std::setw(width) << mat[i] << std::setw(width);
+			std::cout << std::endl;
+		}
 	}
-	std::cout << std::endl;
-}
-
-// helper function for printing vector (debugging)
-template <typename T>
-void printVector(T vec, std::size_t N, int width)
-{
-	std::cout << "\n Printing Vector : \n";
-	for (int i = 0; i < N; i++)
+	else
 	{
-		std::cout << std::setw(width) << vec[i] << std::setw(width);
-		std::cout << std::endl;
+		for (int i = 0; i < N; i++)
+		{
+			for (int j = 0; j < M; j++)
+				std::cout << std::setw(width) << mat[i][j] << std::setw(width);
+			std::cout << std::endl;
+		}
 	}
 	std::cout << std::endl;
 }
@@ -87,7 +86,7 @@ AD<int> **import_prefs(const char *pref_filename)
 		}
 		row_counter++;
 	}
-	//printMatrix(pref_matrix, n_types, n_options + 1, 3);
+	// printMatrix(pref_matrix, n_types, n_options + 1, 3);
 
 	return pref_matrix;
 }
@@ -119,30 +118,32 @@ AD<int> **import_availability(const char *avail_filename)
 	return avail_matrix;
 }
 
-// AD<int> *import_transactions(const char *trans_filename)
-// {
-// 	// import preference matrix
-// 	// pref_matrix: n_types x (n_options + 1) matrix
-// 	io::CSVReader<2> in(trans_filename);
-// 	in.read_header(io::ignore_no_column, "T", "prod_num");
-// 	int prod_num;
-// 	int row_counter = 0;
-// 	AD<int> trans_vec[n_times];
-// 	while (in.read_row(prod_num))
-// 	{
-// 		trans_vec[row_counter] = prod_num;
-// 		row_counter++;
-// 	}
-// 	printVector(trans_vec, n_times, 1, 3);
+AD<int> *import_transactions(const char *trans_filename)
+{
+	// import transaction vector
+	// trans_matrix: T length matrix
+	io::CSVReader<2> in(trans_filename);
+	in.read_header(io::ignore_no_column, "T", "prod_num");
+	int t;
+	int prod_num;
+	int row_counter = 0;
+	AD<int> *trans_vec = new AD<int>[n_times];
+	while (in.read_row(t, prod_num))
+	{
+		trans_vec[row_counter] = prod_num;
+		row_counter++;
+	}
+	//printMatrix(trans_vec, n_times, 1, 3);
 
-// 	return trans_vec;
-// }
+	return trans_vec;
+}
 
 int main()
 {
 	AD<int> **pref_matrix = import_prefs("data/hotel_5/PrefListsBuyUpH5.csv");
 	AD<int> **avail_matrix = import_availability("data/hotel_5/AvailabilityH5.csv");
-	//AD<int> *trans_vec = import_prefs("data/hotel_5/TransactionsH5.csv");
-	printMatrix(pref_matrix, n_types, n_options+1, 3);
+	AD<int> *trans_vec = import_transactions("data/hotel_5/TransactionsH5.csv");
+	printMatrix(trans_vec, n_times, 1, 3);
+
 	std::cout << "TEST DONE" << std::endl;
 }
