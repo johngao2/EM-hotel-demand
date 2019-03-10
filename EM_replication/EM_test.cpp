@@ -42,24 +42,28 @@ template <typename T>
 void printMatrix(T mat, std::size_t N, std::size_t M, int width)
 {
 	std::cout << "\n Printing Matrix : \n";
-	std::cout << "M:" << M << std::endl;
-	if (M == 1)
+
+	for (int i = 0; i < N; i++)
 	{
-		for (int i = 0; i < N; i++)
-		{
-			std::cout << std::setw(width) << mat[i] << std::setw(width);
-			std::cout << std::endl;
-		}
+		for (int j = 0; j < M; j++)
+			std::cout << std::setw(width) << mat[i][j] << std::setw(width);
+		std::cout << std::endl;
 	}
-	else
+
+	std::cout << std::endl;
+}
+
+template <typename T>
+void printVector(T mat, std::size_t N, int width)
+{
+	std::cout << "\n Printing Vector : \n";
+
+	for (int i = 0; i < N; i++)
 	{
-		for (int i = 0; i < N; i++)
-		{
-			for (int j = 0; j < M; j++)
-				std::cout << std::setw(width) << mat[i][j] << std::setw(width);
-			std::cout << std::endl;
-		}
+		std::cout << std::setw(width) << mat[i] << std::setw(width);
+		std::cout << std::endl;
 	}
+
 	std::cout << std::endl;
 }
 
@@ -86,7 +90,7 @@ AD<int> **import_prefs(const char *pref_filename)
 		}
 		row_counter++;
 	}
-	// printMatrix(pref_matrix, n_types, n_options + 1, 3);
+	printMatrix(pref_matrix, n_types, n_options + 1, 3);
 
 	return pref_matrix;
 }
@@ -143,7 +147,7 @@ int main()
 	AD<int> **pref_matrix = import_prefs("data/hotel_5/PrefListsBuyUpH5.csv");
 	AD<int> **avail_matrix = import_availability("data/hotel_5/AvailabilityH5.csv");
 	AD<int> *trans_vec = import_transactions("data/hotel_5/TransactionsH5.csv");
-	printMatrix(trans_vec, n_times, 1, 3);
+	printVector(trans_vec, n_times, 3);
 
 	std::cout << "TEST DONE" << std::endl;
 }
