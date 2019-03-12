@@ -21,15 +21,6 @@ class FG_eval
 		assert(fg.size() == 1);
 		assert(x.size() == 7);
 
-		// Fortran style indexing
-		AD<double> x1 = x[0];
-		AD<double> x2 = x[1];
-		AD<double> x3 = x[2];
-		AD<double> x4 = x[3];
-		AD<double> x5 = x[4];
-		AD<double> x6 = x[5];
-		AD<double> x7 = x[6];
-
 		//data (normally would be imported, but this time hand generated)
 		int data[n_samples][4] = {
 			{0, 1, 2, 10},

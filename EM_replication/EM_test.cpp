@@ -187,7 +187,8 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 				bool available = avail_matrix[t][k];
 				if (available == 1 && k != j_t) // if item is available and not selected
 				{
-					if (sigma_matrix[i][k] < sigma_matrix[i][j_t]) // if any item is ranked better than chosen item
+					if (sigma_matrix[i][k] < sigma_matrix[i][j_t])
+					// if any item is ranked better than chosen item
 					{
 						compatible = 0;
 					}
@@ -204,6 +205,41 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 	return mu_matrix;
 }
 
+// initialize p_sigma matrix to zeroes(This matrix is confusingly notated
+// x_it in the pseudocode)
+// returns p_sigma_matrix: size T x N
+AD<double> **initialize_p_sigma()
+{
+	for (int t = 0; t < n_times; t++)
+	{
+		AD<double> **p_sigma_matrix = 0;
+		p_sigma_matrix = new AD<double> *[n_times];
+		for (int t = 0; t < n_times; t++)
+		{
+			p_sigma_matrix[t] = new AD<double>[n_types];
+			for (int i = 0; i < n_types; i++)
+			{
+				p_sigma_matrix[t][i] = 0;
+			}
+		}
+		return p_sigma_matrix;
+	}
+}
+
+// initialize m vector
+// returns m_vec: length N
+AD<double> *initialize_m_vec()
+{
+	AD<double> *m_vec = new AD<double>[n_times];
+	for (int i = 0; i < n_types; i++)
+	{
+		m_vec[i] = 0;
+	}
+	return m_vec;
+}
+
+// updates customer type probabilities, as first step of E-step
+
 // Problem formulated here
 class FG_eval
 {
@@ -211,27 +247,36 @@ class FG_eval
 	typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
 	void operator()(ADvector &fg, const ADvector &x)
 	{
-		//Compatability code for ipopt ##################################################
-		assert(fg.size() == 1);
-		assert(x.size() == 1);
-		AD<double> x1 = x[0];
-		fg[0] = 1;
-		//Compatability code for ipopt ##################################################
+		// //Compatability code for ipopt ##################################################
+		// assert(fg.size() == 1);
+		// assert(x.size() == n_types);
+		// AD<double> x1 = x[0];
+		// fg[0] = 1;
+		// //Compatability code for ipopt ##################################################
 
 		int **sigma_matrix = import_prefs("data/hotel_5/PrefListsBuyUpH5.csv");
 		int **avail_matrix = import_availability("data/hotel_5/AvailabilityH5.csv");
 		int *trans_vec = import_transactions("data/hotel_5/TransactionsH5.csv");
+
 		int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
+		AD<double> **p_sigma_matrix = initialize_p_sigma();
+		AD<double> *m_vec = initialize_m_vec();
 
 		// Debugging prints ##################################################
 		std::cout << "PREFERENCE MATRIX" << std::endl;
-		printMatrix(sigma_matrix, 14, n_options + 1, 3);
+		printMatrix(sigma_matrix, 10, n_options + 1, 3);
 		std::cout << "AVAILABILITY MATRIX" << std::endl;
-		printMatrix(avail_matrix, 15, n_options, 3);
+		printMatrix(avail_matrix, 10, n_options, 3);
 		std::cout << "TRANSACTION VECTOR" << std::endl;
-		printVector(trans_vec, 15, 3);
+		printVector(trans_vec, 10, 3);
 		std::cout << "MU MATRIX" << std::endl;
-		printMatrix(mu_matrix, n_times, n_types, 3);
+		printMatrix(mu_matrix, 10, n_types, 3);
+		std::cout << "INITIAL VARS" << std::endl;
+		printVector(x, n_types, 3);
+		std::cout << "INITIAL P_SIGMAS" << std::endl;
+		printMatrix(p_sigma_matrix, 10, n_types, 3);
+		std::cout << "INITIAL M_VEC" << std::endl;
+		printVector(m_vec, 10, 3);
 		// Debugging prints ##################################################
 
 		return;
@@ -242,17 +287,20 @@ class FG_eval
 int main()
 {
 	//Compatability code for ipopt ##################################################
-	bool ok = true;
+	int ok = 1;
 	size_t i;
 	typedef CPPAD_TESTVECTOR(double) Dvector;
 
 	// number of independent variables (domain dimension for f and g)
-	size_t nx = 1;
+	size_t nx = n_types;
 	// number of constraints (range dimension for g)
 	size_t ng = 0;
 	// initial value of the independent variables
 	Dvector xi(nx);
-	xi[0] = 1.0;
+	for (int i = 0; i < n_types; i++)
+	{
+		xi[i] = 1.0;
+	}
 
 	// lower and upper limits for x
 	Dvector xl(nx), xu(nx);
