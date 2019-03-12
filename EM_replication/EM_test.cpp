@@ -48,7 +48,7 @@ void printVector(T mat, std::size_t N, int width)
 // this is equivalent to the sigma table where sigma_i(j_t)
 // = rank of j_t in customer type i
 // each row is a cust type, each col is a product, each value is a rank
-// 1st column represents non-purchase option
+// last column represents non-purchase option
 // 0 is most preferred, n_options+1 is least preferred
 // returns sigma_matrix: a n_types x (n_options + 1) matrix
 int **import_prefs(const char *pref_filename)
@@ -77,13 +77,47 @@ int **import_prefs(const char *pref_filename)
 	// convert to sigma matrix
 	int **sigma_matrix = 0;
 	sigma_matrix = new int *[n_types];
+	bool viable; // tracks if an option is viable (i.e. ranked lower than nonpurchase)
+	// constructs sigma matrix for viable options
 	for (int i = 0; i < n_types; i++)
 	{
-		for (int p = 0; p < n_options; p++){
-			
+		sigma_matrix[i] = new int[n_options + 1];
+		viable = 1;
+		for (int rank = 0; rank < n_options + 1; rank++)
+		{
+			int k = pref_matrix[i][rank];
+			if (viable == 1)
+			{
+				if (k == 0)
+				{
+					viable = 0;
+					sigma_matrix[i][n_options] = rank + 1;
+				}
+				else
+				{
+					sigma_matrix[i][k - 1] = rank + 1;
+				}
+			}
 		}
 	}
-	return pref_matrix;
+
+	// zero index rankings, and fill nonviable options with rank (n_options+1)
+	for (int i = 0; i < n_types; i++)
+	{
+		for (int k = 0; k < n_options + 1; k++)
+		{
+			if (sigma_matrix[i][k] == 0)
+			{
+				sigma_matrix[i][k] = n_options + 1;
+			}
+			else
+			{
+				sigma_matrix[i][k]--;
+			}
+		}
+	}
+
+	return sigma_matrix;
 }
 
 // import availability matrix
@@ -133,31 +167,48 @@ int *import_transactions(const char *trans_filename)
 // returns mu_matrix: a n_times x n_types matrix
 // each col is a type, each row is a time period
 // if value is 1, then that type is compatible in that time period
-int **build_mu_mat(int **pref_matrix,
-				   int **avail_matrix,
-				   int *trans_vec)
+int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 {
 	int **mu_matrix = 0;
 	mu_matrix = new int *[n_times];
 	int *ranking;
-	int compatible; // binary var to keep track of if a type is compatible
+	bool compatible; // boolean var to keep track of if a type is compatible
 
 	for (int t = 0; t < n_times; t++)
 	{
+		// std::cout << std::endl;
+		// std::cout << "t: " << t << std::endl;
+		// std::cout << std::endl;
+
 		mu_matrix[t] = new int[n_types];
-		int j_t = trans_vec[t];
+		int j_t = trans_vec[t] - 1;		  // subtracted for zero indexing
 		for (int i = 0; i < n_types; i++) // iterate over each cust type
 		{
-			compatible = 0;
-			ranking = pref_matrix[i];
-			for (int s = 0; s < n_options; s++)
+			compatible = 1;
+			ranking = sigma_matrix[i];
+			// std::cout << std::endl;
+			// std::cout << "i: " << i << std::endl;
+			// std::cout << std::endl;
+			for (int k = 0; k < n_options; k++) // iterate over each option
 			{
-				int k = avail_matrix[t][s];
-				if (k == 1) // if item is available
+				bool available = avail_matrix[t][k];
+				if (available == 1 && k != j_t) // if item is available and not selected
 				{
+					if (sigma_matrix[i][k] < sigma_matrix[i][j_t]) // if any item is ranked better than chosen item
+					{
+						compatible = 0;
+					}
+					// std::cout << "j_t: " << j_t << std::endl;
+					// std::cout << "k: " << k << std::endl;
+					// std::cout << "compatible: " << compatible << std::endl;
 				}
 			}
-			avail_matrix[t][i] = 0;
+			// check if nonpurchase is preferred to chosen item
+			if (sigma_matrix[i][n_options] < sigma_matrix[i][j_t])
+			{
+				compatible = 0;
+			}
+			mu_matrix[t][i] = compatible;
 		}
 	}
 	return mu_matrix;
@@ -177,19 +228,22 @@ class FG_eval
 		fg[0] = 1;
 		//Compatability code for ipopt ##################################################
 
-		int **pref_matrix = import_prefs("data/hotel_5/PrefListsBuyUpH5.csv");
+		int **sigma_matrix = import_prefs("data/hotel_5/PrefListsBuyUpH5.csv");
 		int **avail_matrix = import_availability("data/hotel_5/AvailabilityH5.csv");
 		int *trans_vec = import_transactions("data/hotel_5/TransactionsH5.csv");
-
-		int **mu_matrix = build_mu_mat(pref_matrix, avail_matrix, trans_vec);
+		int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
 
 		// Debugging prints
 		std::cout << "PREFERENCE MATRIX" << std::endl;
-		printMatrix(pref_matrix, 10, n_options + 1, 3);
+		printMatrix(sigma_matrix, 14, n_options + 1, 3);
 		std::cout << "AVAILABILITY MATRIX" << std::endl;
-		printMatrix(avail_matrix, 10, n_options, 3);
-		std::cout << "TRANSACTION MATRIX" << std::endl;
-		printVector(trans_vec, 10, 3);
+		printMatrix(avail_matrix, 15, n_options, 3);
+		std::cout << "TRANSACTION VECTOR" << std::endl;
+		printVector(trans_vec, 15, 3);
+
+
+		std::cout << "MU MATRIX" << std::endl;
+		printMatrix(mu_matrix, 15, n_types, 3);
 
 		return;
 	}
