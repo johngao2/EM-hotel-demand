@@ -48,7 +48,7 @@ void printVector(T mat, std::size_t N, int width)
 // this is equivalent to the sigma table where sigma_i(j_t)
 // = rank of j_t in customer type i
 // each row is a cust type, each col is a product, each value is a rank
-// last column represents non-purchase option
+// first column represents non-purchase option
 // 0 is most preferred, n_options+1 is least preferred
 // returns sigma_matrix: a n_types x (n_options + 1) matrix
 int **import_prefs(const char *pref_filename)
@@ -91,11 +91,11 @@ int **import_prefs(const char *pref_filename)
 				if (k == 0)
 				{
 					viable = 0;
-					sigma_matrix[i][n_options] = rank + 1;
+					sigma_matrix[i][k] = rank + 1;
 				}
 				else
 				{
-					sigma_matrix[i][k - 1] = rank + 1;
+					sigma_matrix[i][k] = rank + 1;
 				}
 			}
 		}
@@ -176,20 +176,13 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 
 	for (int t = 0; t < n_times; t++)
 	{
-		// std::cout << std::endl;
-		// std::cout << "t: " << t << std::endl;
-		// std::cout << std::endl;
-
 		mu_matrix[t] = new int[n_types];
-		int j_t = trans_vec[t] - 1;		  // subtracted for zero indexing
+		int j_t = trans_vec[t];			  // subtracted for zero indexing
 		for (int i = 0; i < n_types; i++) // iterate over each cust type
 		{
 			compatible = 1;
 			ranking = sigma_matrix[i];
-			// std::cout << std::endl;
-			// std::cout << "i: " << i << std::endl;
-			// std::cout << std::endl;
-			for (int k = 0; k < n_options; k++) // iterate over each option
+			for (int k = 1; k < n_options + 1; k++) // iterate over each option
 			{
 				bool available = avail_matrix[t][k];
 				if (available == 1 && k != j_t) // if item is available and not selected
@@ -198,13 +191,10 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 					{
 						compatible = 0;
 					}
-					// std::cout << "j_t: " << j_t << std::endl;
-					// std::cout << "k: " << k << std::endl;
-					// std::cout << "compatible: " << compatible << std::endl;
 				}
 			}
 			// check if nonpurchase is preferred to chosen item
-			if (sigma_matrix[i][n_options] < sigma_matrix[i][j_t])
+			if (sigma_matrix[i][0] < sigma_matrix[i][j_t])
 			{
 				compatible = 0;
 			}
@@ -233,17 +223,16 @@ class FG_eval
 		int *trans_vec = import_transactions("data/hotel_5/TransactionsH5.csv");
 		int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
 
-		// Debugging prints
+		// Debugging prints ##################################################
 		std::cout << "PREFERENCE MATRIX" << std::endl;
 		printMatrix(sigma_matrix, 14, n_options + 1, 3);
 		std::cout << "AVAILABILITY MATRIX" << std::endl;
 		printMatrix(avail_matrix, 15, n_options, 3);
 		std::cout << "TRANSACTION VECTOR" << std::endl;
 		printVector(trans_vec, 15, 3);
-
-
 		std::cout << "MU MATRIX" << std::endl;
-		printMatrix(mu_matrix, 15, n_types, 3);
+		printMatrix(mu_matrix, n_times, n_types, 3);
+		// Debugging prints ##################################################
 
 		return;
 	}
