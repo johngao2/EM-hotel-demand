@@ -102,9 +102,10 @@ class FG_eval
 };
 } // namespace
 
-int main()
+int optimize()
 {
 	bool ok = true;
+
 	size_t i;
 	typedef CPPAD_TESTVECTOR(double) Dvector;
 
@@ -163,5 +164,15 @@ int main()
 	ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
 	//
 
+	return ok;
+}
+
+int main()
+{
+	int ok;
+	for (int i = 0; i < 5; i++)
+	{
+		ok = optimize();
+	}
 	return ok;
 }

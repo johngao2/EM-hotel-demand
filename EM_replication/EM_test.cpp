@@ -238,7 +238,7 @@ AD<double> *initialize_m_vec()
 	return m_vec;
 }
 
-// updates customer type probabilities, as first step of E-step
+
 
 // Problem formulated here
 class FG_eval
@@ -261,6 +261,9 @@ class FG_eval
 		int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
 		AD<double> **p_sigma_matrix = initialize_p_sigma();
 		AD<double> *m_vec = initialize_m_vec();
+
+		// update customer type probabilities, as first step of E-step
+		AD<double> **type_probs(int **sigma_matrix, AD<double>)
 
 		// Debugging prints ##################################################
 		std::cout << "PREFERENCE MATRIX" << std::endl;
