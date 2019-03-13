@@ -1,6 +1,7 @@
 // Actually a logit exercise
 // Works with example solver
 #include <iostream>
+#include <iomanip>
 #include <algorithm>
 #include <iterator>
 #include <math.h>
@@ -17,14 +18,15 @@ using CppAD::AD;
 
 // helper function for printing matrices (debugging)
 template <typename T>
-void printMatrix(T mat, std::size_t N, std::size_t M, int width)
+void printMatrix(const char *text, T mat, std::size_t N, std::size_t M, int width)
 {
-	std::cout << "\n Printing Matrix : \n";
+	std::cout << text << std::endl;
 
 	for (int i = 0; i < N; i++)
 	{
 		for (int j = 0; j < M; j++)
-			std::cout << std::setw(width) << mat[i][j] << std::setw(width);
+			std::cout << std::setw(width) << std::fixed << std::setprecision(2)
+					  << mat[i][j] << std::setw(width);
 		std::cout << std::endl;
 	}
 	std::cout << std::endl;
@@ -32,13 +34,14 @@ void printMatrix(T mat, std::size_t N, std::size_t M, int width)
 
 // helper function for printing vectors (debugging)
 template <typename T>
-void printVector(T mat, std::size_t N, int width)
+void printVector(const char *text, T mat, std::size_t N, int width)
 {
-	std::cout << "\n Printing Vector : \n";
+	std::cout << text << std::endl;
 
 	for (int i = 0; i < N; i++)
 	{
-		std::cout << std::setw(width) << mat[i] << std::setw(width);
+		std::cout << std::setw(width) << std::fixed << std::setprecision(2)
+				  << mat[i] << std::setw(width);
 		std::cout << std::endl;
 	}
 	std::cout << std::endl;
@@ -205,32 +208,11 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 	return mu_matrix;
 }
 
-// initialize p_sigma matrix to zeroes(This matrix is confusingly notated
-// x_it in the pseudocode)
-// returns p_sigma_matrix: size T x N
-AD<double> **initialize_p_sigma()
-{
-	for (int t = 0; t < n_times; t++)
-	{
-		AD<double> **p_sigma_matrix = 0;
-		p_sigma_matrix = new AD<double> *[n_times];
-		for (int t = 0; t < n_times; t++)
-		{
-			p_sigma_matrix[t] = new AD<double>[n_types];
-			for (int i = 0; i < n_types; i++)
-			{
-				p_sigma_matrix[t][i] = 0;
-			}
-		}
-		return p_sigma_matrix;
-	}
-}
-
 // initialize m vector
 // returns m_vec: length N
-AD<double> *initialize_m_vec()
+double *initialize_m_vec()
 {
-	AD<double> *m_vec = new AD<double>[n_times];
+	double *m_vec = new double[n_times];
 	for (int i = 0; i < n_types; i++)
 	{
 		m_vec[i] = 0;
@@ -238,7 +220,40 @@ AD<double> *initialize_m_vec()
 	return m_vec;
 }
 
+// build p_sigma matrix (calculates customer type probabilities
+// based on the data and previous guess for xi)
+// p_sigma is confusingly denoted as x_it in the pseudocode
+double **build_cust_type_probs(double *x, int **mu_matrix)
+{
+	double **p_sigma_matrix = 0;
+	p_sigma_matrix = new double *[n_times];
+	for (int t = 0; t < n_times; t++)
+	{
+		p_sigma_matrix[t] = new double[n_types];
 
+		// first calculate sum probabilities in each time
+		// this is the denominator sum(x_h) for all compatible types h
+		double sumprob = 0;
+		for (int i = 0; i < n_types; i++)
+		{
+			sumprob += mu_matrix[t][i] * x[i];
+		}
+
+		// update type probability if that type is compatible
+		for (int i = 0; i < n_types; i++)
+		{
+			if (mu_matrix[t][i] == 1) // set was compatible, so update this value
+			{
+				p_sigma_matrix[t][i] = x[i] / sumprob;
+			}
+			else
+			{
+				p_sigma_matrix[t][i] = 0;
+			}
+		}
+	}
+	return p_sigma_matrix;
+}
 
 // Problem formulated here
 class FG_eval
@@ -247,64 +262,111 @@ class FG_eval
 	typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
 	void operator()(ADvector &fg, const ADvector &x)
 	{
-		// //Compatability code for ipopt ##################################################
-		// assert(fg.size() == 1);
-		// assert(x.size() == n_types);
-		// AD<double> x1 = x[0];
-		// fg[0] = 1;
-		// //Compatability code for ipopt ##################################################
+		assert(fg.size() == 1);
+		assert(x.size() == 7);
 
-		int **sigma_matrix = import_prefs("data/hotel_5/PrefListsBuyUpH5.csv");
-		int **avail_matrix = import_availability("data/hotel_5/AvailabilityH5.csv");
-		int *trans_vec = import_transactions("data/hotel_5/TransactionsH5.csv");
+		//data (normally would be imported, but this time hand generated)
+		int data[14][4] = {
+			{0, 1, 2, 10},
+			{0, 2, 4, 2},
+			{0, 3, 6, 4},
+			{0, 5, 10, 11},
+			{0, 6, 12, 23},
+			{1, 2, 4, 8},
+			{1, 3, 6, 3},
+			{1, 4, 8, 2},
+			{1, 6, 12, 1},
+			{2, 1, 2, 6},
+			{2, 2, 4, 32},
+			{3, 1, 2, 66},
+			{3, 3, 6, 21},
+			{3, 5, 10, 19}};
 
-		int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
-		AD<double> **p_sigma_matrix = initialize_p_sigma();
-		AD<double> *m_vec = initialize_m_vec();
+		//populate cost and price matrices
+		//data needs to be sorted by time, then by option ID
+		int prices[4][7] = {{0}}; //price matrix
+		int counts[4][7] = {{0}}; //count matrix
+		int t;
+		int i;
+		for (int s = 0; s < 14; s++)
+		{
+			t = data[s][0];
+			i = data[s][1];
+			prices[t][i] = data[s][2];
+			counts[t][i] = data[s][3];
+		}
 
-		// update customer type probabilities, as first step of E-step
-		AD<double> **type_probs(int **sigma_matrix, AD<double>)
+		//calculating utility matrix
+		AD<double> utils[4][7] = {{0}};
+		for (int t = 0; t < 4; t++)
+		{
+			for (int i = 0; i < 7; i++)
+			{
+				if (counts[t][i] > 0)
+				{
+					utils[t][i] = x[i - 1] + x[6] * prices[t][i];
+				}
+			}
+		}
 
-		// Debugging prints ##################################################
-		std::cout << "PREFERENCE MATRIX" << std::endl;
-		printMatrix(sigma_matrix, 10, n_options + 1, 3);
-		std::cout << "AVAILABILITY MATRIX" << std::endl;
-		printMatrix(avail_matrix, 10, n_options, 3);
-		std::cout << "TRANSACTION VECTOR" << std::endl;
-		printVector(trans_vec, 10, 3);
-		std::cout << "MU MATRIX" << std::endl;
-		printMatrix(mu_matrix, 10, n_types, 3);
-		std::cout << "INITIAL VARS" << std::endl;
-		printVector(x, n_types, 3);
-		std::cout << "INITIAL P_SIGMAS" << std::endl;
-		printMatrix(p_sigma_matrix, 10, n_types, 3);
-		std::cout << "INITIAL M_VEC" << std::endl;
-		printVector(m_vec, 10, 3);
-		// Debugging prints ##################################################
+		//calculating prob matrix
+		//first need to calculate avg prob per time period
+		AD<double> avg_p[4]; // array avg prob over all options in a time period
+		for (int t = 0; t < 4; t++)
+		{
+			AD<double> sumprob = 0;
+			for (int i = 0; i < 7; i++)
+			{
+				sumprob += exp(utils[t][i]);
+			}
+			avg_p[t] = sumprob;
+		}
+		//calculating matrix of probabilities
+		AD<double> probs[4][7] = {{0}};
+		for (int t = 0; t < 4; t++)
+		{
+			for (int i = 0; i < 7; i++)
+			{
+				probs[t][i] = exp(utils[t][i]) / avg_p[t];
+			}
+		}
+
+		//building LL
+		for (int t = 0; t < 4; t++)
+		{
+			for (int i = 0; i < 7; i++)
+			{
+				// f(x)
+				fg[0] -= counts[t][i] * log(probs[t][i]);
+			}
+		}
 
 		return;
 	}
 };
 } // namespace
 
-int main()
+// m-step optimization
+int optimize()
 {
-	//Compatability code for ipopt ##################################################
-	int ok = 1;
+	bool ok;
+
 	size_t i;
 	typedef CPPAD_TESTVECTOR(double) Dvector;
 
 	// number of independent variables (domain dimension for f and g)
-	size_t nx = n_types;
+	size_t nx = 7;
 	// number of constraints (range dimension for g)
 	size_t ng = 0;
 	// initial value of the independent variables
 	Dvector xi(nx);
-	for (int i = 0; i < n_types; i++)
-	{
-		xi[i] = 1.0;
-	}
-
+	xi[0] = 1.0;
+	xi[1] = 1.0;
+	xi[2] = 1.0;
+	xi[3] = 1.0;
+	xi[4] = 1.0;
+	xi[5] = 1.0;
+	xi[6] = 1.0;
 	// lower and upper limits for x
 	Dvector xl(nx), xu(nx);
 	for (i = 0; i < nx; i++)
@@ -322,7 +384,7 @@ int main()
 	std::string options;
 	// turn off any printing
 	options += "Integer print_level  0\n";
-	options += "String  sb           yes\n";
+	//options += "String  sb           yes\n";
 	// maximum number of iterations
 	options += "Integer max_iter     200\n";
 	// approximate accuracy in first order necessary conditions;
@@ -346,6 +408,43 @@ int main()
 	//
 	ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
 	//
+
+	return ok;
+}
+
+int main()
+{
+	// load data and preprocessing
+	int **sigma_matrix = import_prefs("data/hotel_5/PrefListsBuyUpH5.csv");
+	int **avail_matrix = import_availability("data/hotel_5/AvailabilityH5.csv");
+	int *trans_vec = import_transactions("data/hotel_5/TransactionsH5.csv");
+	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
+	// Data import debugging prints ##################################################
+	{
+		// printMatrix("PREFERENCE MATRIX:", sigma_matrix, 10, n_options + 1, 3);
+		// printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, n_options, 3);
+		// printVector("TRANSACTION VECTOR:", trans_vec, 10, 3);
+		printMatrix("MU MATRIX:", mu_matrix, 20, n_types, 3);
+	}
+
+	// initialize x vector to some arbitrary values
+	double x[n_types];
+	std::fill_n(x, n_types, 1);
+
+	// EM loop starts here (currently running once for testing)
+	bool done = 0;
+	while (!done)
+	{
+		// E step:
+		double *m_vec = initialize_m_vec();
+		double **p_sigma_matrix = build_cust_type_probs(x, mu_matrix);
+		printMatrix("P_SIGMA MATRIX:", p_sigma_matrix, n_times, n_types, 5);
+
+		done = 1;
+	}
+
+	int ok;
+	ok = optimize();
 
 	std::cout << "TEST DONE" << std::endl;
 	return ok;
