@@ -211,6 +211,7 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 // build p_sigma matrix (calculates customer type probabilities
 // based on the data and previous guess for xi)
 // p_sigma is confusingly denoted as x_it in the pseudocode
+// resurns p_sigma matrix: n_times x n_types matrix
 double **build_cust_type_probs(double *x, int **mu_matrix)
 {
 	double **p_sigma_matrix = 0;
@@ -243,14 +244,18 @@ double **build_cust_type_probs(double *x, int **mu_matrix)
 	return p_sigma_matrix;
 }
 
-// initialize m vector
+// estimate m vector
 // returns m_vec: length N
-double *initialize_m_vec()
+double *estimate_m_vec(double **p_sigma_matrix)
 {
 	double *m_vec = new double[n_times];
 	for (int i = 0; i < n_types; i++)
 	{
 		m_vec[i] = 0;
+		for (int t = 0; t < n_times; t++)
+		{
+			m_vec[i] += p_sigma_matrix[t][i];
+		}
 	}
 	return m_vec;
 }
@@ -347,7 +352,7 @@ class FG_eval
 } // namespace
 
 // m-step optimization
-int optimize()
+int max_step(double *m_vec)
 {
 	bool ok;
 
@@ -424,7 +429,7 @@ int main()
 		// printMatrix("PREFERENCE MATRIX:", sigma_matrix, 10, n_options + 1, 3);
 		// printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, n_options, 3);
 		// printVector("TRANSACTION VECTOR:", trans_vec, 10, 3);
-		printMatrix("MU MATRIX:", mu_matrix, 20, n_types, 3);
+		// printMatrix("MU MATRIX:", mu_matrix, 20, n_types, 3);
 	}
 
 	// initialize x vector to some arbitrary values
@@ -436,17 +441,20 @@ int main()
 	while (!done)
 	{
 		// E step:
-		double *m_vec = initialize_m_vec();
 		double **p_sigma_matrix = build_cust_type_probs(x, mu_matrix);
-		printMatrix("P_SIGMA MATRIX:", p_sigma_matrix, n_times, n_types, 5);
-
+		double *m_vec = estimate_m_vec(p_sigma_matrix);
+		// E-step debugging prints ##################################################
+		{
+			// printMatrix("P_SIGMA MATRIX:", p_sigma_matrix, n_times, n_types, 5);
+			// printVector("M_VECTOR:", m_vec, n_types, 5);
+		}
+		// M step:
+		// double x_new[n_types] = max_step(m_vec);
 		done = 1;
 	}
 
-	int ok;
-	ok = optimize();
 
 	std::cout << "TEST DONE" << std::endl;
-	return ok;
+	return done;
 	//Compatability code for ipopt ##################################################
 }
