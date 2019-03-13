@@ -1,7 +1,8 @@
 ## Project Overview:
-~~Step 1: Implement simple multinomial logit go get familiar with likelihood maximization using CppAD and IPOPT packages.~~ **- Done**  
+~~Step 1: Implement simple multinomial logit go get familiar with likelihood maximization using CppAD and IPOPT packages.~~ **- Done**  (MNL_baseline > simple_mnl > simple_mnl.cpp)
 
 Step 2: Replicate EM algorithm (van Ryzin, Vulcano 2017) on transaction data to forecast customer preferences given product assortments at each time step, **and do it quick**. Use on simulated and real datasets from the original paper, and compare results.  
+(EM_replication > EM_test.cpp)
 
 Step 3: Extend van Ryzin & Vulcano to include seasonality and be fast enough to work on hotel problems where the assortment size is gigantic.
 

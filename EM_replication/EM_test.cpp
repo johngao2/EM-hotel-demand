@@ -208,18 +208,6 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 	return mu_matrix;
 }
 
-// initialize m vector
-// returns m_vec: length N
-double *initialize_m_vec()
-{
-	double *m_vec = new double[n_times];
-	for (int i = 0; i < n_types; i++)
-	{
-		m_vec[i] = 0;
-	}
-	return m_vec;
-}
-
 // build p_sigma matrix (calculates customer type probabilities
 // based on the data and previous guess for xi)
 // p_sigma is confusingly denoted as x_it in the pseudocode
@@ -253,6 +241,18 @@ double **build_cust_type_probs(double *x, int **mu_matrix)
 		}
 	}
 	return p_sigma_matrix;
+}
+
+// initialize m vector
+// returns m_vec: length N
+double *initialize_m_vec()
+{
+	double *m_vec = new double[n_times];
+	for (int i = 0; i < n_types; i++)
+	{
+		m_vec[i] = 0;
+	}
+	return m_vec;
 }
 
 // Problem formulated here
