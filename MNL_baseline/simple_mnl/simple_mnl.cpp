@@ -62,7 +62,7 @@ class FG_eval
 		int counts[n_times][n_options] = {{0}}; //count matrix
 		int t;
 		int i;
-		printMatrix("DATA: ", data, n_samples, 4, 6);
+		// printMatrix("DATA: ", data, n_samples, 4, 6);
 		for (int s = 0; s < n_samples; s++)
 		{
 			t = data[s][0];
@@ -70,9 +70,9 @@ class FG_eval
 			prices[t][i] = data[s][2];
 			counts[t][i] = data[s][3];
 		}
-		printMatrix("PRICES: ", prices, n_times, n_options, 3);
-		printMatrix("COUNTS: ", counts, n_times, n_options, 3);
-		printVector("X:", x, 7, 3);
+		// printMatrix("PRICES: ", prices, n_times, n_options, 3);
+		// printMatrix("COUNTS: ", counts, n_times, n_options, 3);
+		// printVector("X:", x, 7, 3);
 
 		//calculating utility matrix
 		AD<double> utils[n_times][n_options] = {{0}};
@@ -87,7 +87,7 @@ class FG_eval
 				}
 			}
 		}
-		printMatrix("UTILS: ", utils, n_times, n_options, 3);
+		// printMatrix("UTILS: ", utils, n_times, n_options, 3);
 
 		//calculating prob matrix
 		//first need to calculate avg prob per time period
@@ -229,6 +229,7 @@ int main()
 	for (int j = 0; j < 5; j++)
 	{
 		ok = optimize();
+		// shuffle data
 		for (int s = 0; s < n_samples; s++)
 		{
 			data[s][3] = rand() % 100;

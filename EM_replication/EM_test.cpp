@@ -16,6 +16,8 @@ namespace
 {
 using CppAD::AD;
 
+double m_vec[n_types];
+
 // helper function for printing matrices (debugging)
 template <typename T>
 void printMatrix(const char *text, T mat, std::size_t N, std::size_t M, int width)
@@ -246,9 +248,9 @@ double **build_cust_type_probs(double *x, int **mu_matrix)
 
 // estimate m vector
 // returns m_vec: length N
-double *estimate_m_vec(double **p_sigma_matrix)
+// M_VEC IS A GLOBAL VARIABLE
+void estimate_m_vec(double **p_sigma_matrix)
 {
-	double *m_vec = new double[n_times];
 	for (int i = 0; i < n_types; i++)
 	{
 		m_vec[i] = 0;
@@ -257,7 +259,6 @@ double *estimate_m_vec(double **p_sigma_matrix)
 			m_vec[i] += p_sigma_matrix[t][i];
 		}
 	}
-	return m_vec;
 }
 
 // Problem formulated here
@@ -267,83 +268,21 @@ class FG_eval
 	typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
 	void operator()(ADvector &fg, const ADvector &x)
 	{
-		assert(fg.size() == 1);
-		assert(x.size() == 7);
+		assert(fg.size() == 2);
+		assert(x.size() == n_types);
 
-		//data (normally would be imported, but this time hand generated)
-		int data[14][4] = {
-			{0, 1, 2, 10},
-			{0, 2, 4, 2},
-			{0, 3, 6, 4},
-			{0, 5, 10, 11},
-			{0, 6, 12, 23},
-			{1, 2, 4, 8},
-			{1, 3, 6, 3},
-			{1, 4, 8, 2},
-			{1, 6, 12, 1},
-			{2, 1, 2, 6},
-			{2, 2, 4, 32},
-			{3, 1, 2, 66},
-			{3, 3, 6, 21},
-			{3, 5, 10, 19}};
+		printVector("m_vec:", m_vec, n_types, 4);
+		printVector("x", x, n_types, 4);
 
-		//populate cost and price matrices
-		//data needs to be sorted by time, then by option ID
-		int prices[4][7] = {{0}}; //price matrix
-		int counts[4][7] = {{0}}; //count matrix
-		int t;
-		int i;
-		for (int s = 0; s < 14; s++)
+		//building LL function
+		for (int i = 0; i < n_types; i++)
 		{
-			t = data[s][0];
-			i = data[s][1];
-			prices[t][i] = data[s][2];
-			counts[t][i] = data[s][3];
+			fg[0] -= m_vec[i] * log(x[i]);
 		}
-
-		//calculating utility matrix
-		AD<double> utils[4][7] = {{0}};
-		for (int t = 0; t < 4; t++)
+		// constraint that sum of x's = 1
+		for (int i = 0; i < n_types; i++)
 		{
-			for (int i = 0; i < 7; i++)
-			{
-				if (counts[t][i] > 0)
-				{
-					utils[t][i] = x[i - 1] + x[6] * prices[t][i];
-				}
-			}
-		}
-
-		//calculating prob matrix
-		//first need to calculate avg prob per time period
-		AD<double> avg_p[4]; // array avg prob over all options in a time period
-		for (int t = 0; t < 4; t++)
-		{
-			AD<double> sumprob = 0;
-			for (int i = 0; i < 7; i++)
-			{
-				sumprob += exp(utils[t][i]);
-			}
-			avg_p[t] = sumprob;
-		}
-		//calculating matrix of probabilities
-		AD<double> probs[4][7] = {{0}};
-		for (int t = 0; t < 4; t++)
-		{
-			for (int i = 0; i < 7; i++)
-			{
-				probs[t][i] = exp(utils[t][i]) / avg_p[t];
-			}
-		}
-
-		//building LL
-		for (int t = 0; t < 4; t++)
-		{
-			for (int i = 0; i < 7; i++)
-			{
-				// f(x)
-				fg[0] -= counts[t][i] * log(probs[t][i]);
-			}
+			fg[1] += x[i];
 		}
 
 		return;
@@ -352,7 +291,7 @@ class FG_eval
 } // namespace
 
 // m-step optimization
-int max_step(double *m_vec)
+int m_step()
 {
 	bool ok;
 
@@ -360,27 +299,26 @@ int max_step(double *m_vec)
 	typedef CPPAD_TESTVECTOR(double) Dvector;
 
 	// number of independent variables (domain dimension for f and g)
-	size_t nx = 7;
+	size_t nx = n_types;
 	// number of constraints (range dimension for g)
-	size_t ng = 0;
+	size_t ng = 1;
 	// initial value of the independent variables
 	Dvector xi(nx);
-	xi[0] = 1.0;
-	xi[1] = 1.0;
-	xi[2] = 1.0;
-	xi[3] = 1.0;
-	xi[4] = 1.0;
-	xi[5] = 1.0;
-	xi[6] = 1.0;
+	for (i = 0; i < n_types; i++)
+	{
+		xi[i] = 1;
+	}
 	// lower and upper limits for x
 	Dvector xl(nx), xu(nx);
 	for (i = 0; i < nx; i++)
 	{
-		xl[i] = -1e19;
-		xu[i] = 1e19;
+		xl[i] = 0;
+		xu[i] = 1;
 	}
 	// lower and upper limits for g
 	Dvector gl(ng), gu(ng);
+	gl[0] = 0;
+	gu[0] = 1;
 
 	// object that computes objective and constraints
 	FG_eval fg_eval;
@@ -388,8 +326,8 @@ int max_step(double *m_vec)
 	// options
 	std::string options;
 	// turn off any printing
-	options += "Integer print_level  0\n";
-	//options += "String  sb           yes\n";
+	// options += "Integer print_level  0\n";
+	// options += "String  sb           yes\n";
 	// maximum number of iterations
 	options += "Integer max_iter     200\n";
 	// approximate accuracy in first order necessary conditions;
@@ -413,6 +351,8 @@ int max_step(double *m_vec)
 	//
 	ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
 	//
+
+	printVector("SOLN:", solution.x, n_types, 3);
 
 	return ok;
 }
@@ -442,17 +382,16 @@ int main()
 	{
 		// E step:
 		double **p_sigma_matrix = build_cust_type_probs(x, mu_matrix);
-		double *m_vec = estimate_m_vec(p_sigma_matrix);
+		estimate_m_vec(p_sigma_matrix);
 		// E-step debugging prints ##################################################
 		{
 			// printMatrix("P_SIGMA MATRIX:", p_sigma_matrix, n_times, n_types, 5);
 			// printVector("M_VECTOR:", m_vec, n_types, 5);
 		}
 		// M step:
-		// double x_new[n_types] = max_step(m_vec);
+		m_step();
 		done = 1;
 	}
-
 
 	std::cout << "TEST DONE" << std::endl;
 	return done;
