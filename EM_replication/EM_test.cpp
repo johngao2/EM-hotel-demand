@@ -16,7 +16,13 @@ namespace
 {
 using CppAD::AD;
 
-double m_vec[n_types];
+double m_vec[n_types];		   // m vector
+double current_x_vec[n_times]; // current solution vector
+double x_diff_vec[n_times];	// tracks changes in solution
+
+// for (int i = 0; i < n_types; i++){ // arbitrary solution initialization
+// 	current_x_vec[i] = 1;
+// }
 
 // helper function for printing matrices (debugging)
 template <typename T>
@@ -36,13 +42,13 @@ void printMatrix(const char *text, T mat, std::size_t N, std::size_t M, int widt
 
 // helper function for printing vectors (debugging)
 template <typename T>
-void printVector(const char *text, T mat, std::size_t N, int width)
+void printVector(const char *text, T mat, std::size_t N, int width, int precision = 2)
 {
 	std::cout << text << std::endl;
 
 	for (int i = 0; i < N; i++)
 	{
-		std::cout << std::setw(width) << std::fixed << std::setprecision(2)
+		std::cout << std::setw(width) << std::fixed << std::setprecision(precision)
 				  << mat[i] << std::setw(width);
 		std::cout << std::endl;
 	}
@@ -271,13 +277,12 @@ class FG_eval
 		assert(fg.size() == 2);
 		assert(x.size() == n_types);
 
-		printVector("m_vec:", m_vec, n_types, 4);
-		printVector("x", x, n_types, 4);
+		// printVector("m_vec:", m_vec, n_types, 4, 5);
 
 		//building LL function
 		for (int i = 0; i < n_types; i++)
 		{
-			fg[0] -= m_vec[i] * log(x[i]);
+			fg[0] += m_vec[i] * log(x[i]);
 		}
 		// constraint that sum of x's = 1
 		for (int i = 0; i < n_types; i++)
@@ -291,7 +296,7 @@ class FG_eval
 } // namespace
 
 // m-step optimization
-int m_step()
+void m_step()
 {
 	bool ok;
 
@@ -326,8 +331,9 @@ int m_step()
 	// options
 	std::string options;
 	// turn off any printing
-	// options += "Integer print_level  0\n";
-	// options += "String  sb           yes\n";
+	options += "Integer print_level  0\n";
+	options += "String  sb           yes\n";
+	options += "Numeric obj_scaling_factor   -1\n";
 	// maximum number of iterations
 	options += "Integer max_iter     200\n";
 	// approximate accuracy in first order necessary conditions;
@@ -352,9 +358,18 @@ int m_step()
 	ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
 	//
 
-	printVector("SOLN:", solution.x, n_types, 3);
+	// printVector("PAST SOLUTION", current_x_vec, n_types, 3, 5);
+	// printVector("NEW SOLUTION", solution.x, n_types, 3, 5);
 
-	return ok;
+	// update current optimal x vector and difference vector
+	for (int i = 0; i < n_types; i++)
+	{
+		x_diff_vec[i] = current_x_vec[i] - solution.x[i];
+		current_x_vec[i] = solution.x[i];
+	}
+
+	std::cout << "CURRENT OBJECTIVE VALUE: " << solution.obj_value << std::endl;
+	// printVector("DIFFERENCE", x_diff_vec, n_types, 3, 5);
 }
 
 int main()
@@ -372,16 +387,15 @@ int main()
 		// printMatrix("MU MATRIX:", mu_matrix, 20, n_types, 3);
 	}
 
-	// initialize x vector to some arbitrary values
-	double x[n_types];
-	std::fill_n(x, n_types, 1);
+	std::fill_n(current_x_vec, n_types, 0.5);
+	double maxdiff = 1;
 
 	// EM loop starts here (currently running once for testing)
 	bool done = 0;
 	while (!done)
 	{
 		// E step:
-		double **p_sigma_matrix = build_cust_type_probs(x, mu_matrix);
+		double **p_sigma_matrix = build_cust_type_probs(current_x_vec, mu_matrix);
 		estimate_m_vec(p_sigma_matrix);
 		// E-step debugging prints ##################################################
 		{
@@ -390,8 +404,15 @@ int main()
 		}
 		// M step:
 		m_step();
-		done = 1;
+
+		// find max difference of solution, exit loop if small enough
+		maxdiff = *std::max_element(x_diff_vec, x_diff_vec + n_types);
+		if (maxdiff < 0.00001)
+		{
+			done = 1;
+		}
 	}
+	// printVector("CURRENT SOLUTION", current_x_vec, n_types, 3, 5);
 
 	std::cout << "TEST DONE" << std::endl;
 	return done;
