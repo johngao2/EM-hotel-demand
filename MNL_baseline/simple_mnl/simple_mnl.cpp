@@ -2,6 +2,7 @@
 // Works with example solver
 #include <cppad/ipopt/solve.hpp>
 #include <iostream>
+#include <stdlib.h>
 #include <math.h>
 
 #define n_times 4
@@ -12,6 +13,39 @@ namespace
 {
 using CppAD::AD;
 
+int data[n_samples][4];
+
+template <typename T>
+void printMatrix(const char *text, T mat, std::size_t N, std::size_t M, int width)
+{
+	std::cout << text << std::endl;
+
+	for (int i = 0; i < N; i++)
+	{
+		for (int j = 0; j < M; j++)
+			std::cout << std::setw(width) << std::fixed << std::setprecision(2)
+					  << mat[i][j] << std::setw(width);
+		std::cout << std::endl;
+	}
+	std::cout << std::endl;
+}
+
+// helper function for printing vectors (debugging)
+template <typename T>
+void printVector(const char *text, T mat, std::size_t N, int width)
+{
+	std::cout << text << std::endl;
+
+	for (int i = 0; i < N; i++)
+	{
+		std::cout << std::setw(width) << std::fixed << std::setprecision(2)
+				  << mat[i] << std::setw(width);
+		std::cout << std::endl;
+	}
+	std::cout << std::endl;
+}
+
+
 class FG_eval
 {
   public:
@@ -19,31 +53,16 @@ class FG_eval
 	void operator()(ADvector &fg, const ADvector &x)
 	{
 		assert(fg.size() == 1);
-		assert(x.size() == 7);
+		assert(x.size() == 8);
 
 		//data (normally would be imported, but this time hand generated)
-		int data[n_samples][4] = {
-			{0, 1, 2, 10},
-			{0, 2, 4, 2},
-			{0, 3, 6, 4},
-			{0, 5, 10, 11},
-			{0, 6, 12, 23},
-			{1, 2, 4, 8},
-			{1, 3, 6, 3},
-			{1, 4, 8, 2},
-			{1, 6, 12, 1},
-			{2, 1, 2, 6},
-			{2, 2, 4, 32},
-			{3, 1, 2, 66},
-			{3, 3, 6, 21},
-			{3, 5, 10, 19}};
-
 		//populate cost and price matrices
 		//data needs to be sorted by time, then by option ID
 		int prices[n_times][n_options] = {{0}}; //price matrix
 		int counts[n_times][n_options] = {{0}}; //count matrix
 		int t;
 		int i;
+		printMatrix("DATA: ", data, n_samples, 4, 6);
 		for (int s = 0; s < n_samples; s++)
 		{
 			t = data[s][0];
@@ -51,6 +70,9 @@ class FG_eval
 			prices[t][i] = data[s][2];
 			counts[t][i] = data[s][3];
 		}
+		printMatrix("PRICES: ", prices, n_times, n_options, 3);
+		printMatrix("COUNTS: ", counts, n_times, n_options, 3);
+		printVector("X:", x, 7, 3);
 
 		//calculating utility matrix
 		AD<double> utils[n_times][n_options] = {{0}};
@@ -58,12 +80,14 @@ class FG_eval
 		{
 			for (int i = 0; i < n_options; i++)
 			{
+				//std::cout << x[i] << std::endl;
 				if (counts[t][i] > 0)
 				{
-					utils[t][i] = x[i - 1] + x[6] * prices[t][i];
+					utils[t][i] = x[i] + x[7] * prices[t][i];
 				}
 			}
 		}
+		printMatrix("UTILS: ", utils, n_times, n_options, 3);
 
 		//calculating prob matrix
 		//first need to calculate avg prob per time period
@@ -77,6 +101,7 @@ class FG_eval
 			}
 			avg_p[t] = sumprob;
 		}
+		
 		//calculating matrix of probabilities
 		AD<double> probs[n_times][n_options] = {{0}};
 		for (int t = 0; t < n_times; t++)
@@ -86,6 +111,8 @@ class FG_eval
 				probs[t][i] = exp(utils[t][i]) / avg_p[t];
 			}
 		}
+
+		// printMatrix("PROBS: ", probs, n_times, n_options, 3);
 
 		//building LL
 		for (int t = 0; t < n_times; t++)
@@ -110,7 +137,7 @@ int optimize()
 	typedef CPPAD_TESTVECTOR(double) Dvector;
 
 	// number of independent variables (domain dimension for f and g)
-	size_t nx = 7;
+	size_t nx = 8;
 	// number of constraints (range dimension for g)
 	size_t ng = 0;
 	// initial value of the independent variables
@@ -122,6 +149,7 @@ int optimize()
 	xi[4] = 1.0;
 	xi[5] = 1.0;
 	xi[6] = 1.0;
+	xi[7] = 1.0;
 	// lower and upper limits for x
 	Dvector xl(nx), xu(nx);
 	for (i = 0; i < nx; i++)
@@ -170,9 +198,42 @@ int optimize()
 int main()
 {
 	int ok;
-	for (int i = 0; i < 5; i++)
+
+	// initial data
+	int data_filler[n_samples][4] =
+		{
+			{0, 1, 2, 10},
+			{0, 2, 4, 2},
+			{0, 3, 6, 4},
+			{0, 5, 10, 11},
+			{0, 6, 12, 23},
+			{1, 2, 4, 8},
+			{1, 3, 6, 3},
+			{1, 4, 8, 2},
+			{1, 6, 12, 1},
+			{2, 1, 2, 6},
+			{2, 2, 4, 32},
+			{3, 1, 2, 66},
+			{3, 3, 6, 21},
+			{3, 5, 10, 19}};
+
+	for (int s = 0; s < n_samples; s++)
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			data[s][i] = data_filler[s][i];
+		}
+	}
+
+	// test multipler solves with different data
+	for (int j = 0; j < 5; j++)
 	{
 		ok = optimize();
+		for (int s = 0; s < n_samples; s++)
+		{
+			data[s][3] = rand() % 100;
+		}
 	}
+
 	return ok;
 }
