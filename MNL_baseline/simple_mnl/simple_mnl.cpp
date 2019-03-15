@@ -226,7 +226,7 @@ int main()
 	}
 
 	// test multipler solves with different data
-	for (int j = 0; j < 5; j++)
+	for (int j = 0; j < 100; j++)
 	{
 		ok = optimize();
 		// shuffle data
