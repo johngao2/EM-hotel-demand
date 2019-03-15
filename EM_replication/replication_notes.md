@@ -1,4 +1,4 @@
-# Log-Likelihood results (buy-up):
+### Log-Likelihood results (buy-up):
 
 | Hotel | My result | Their Result | Diff (num) |
 |-------|-----------|--------------|------------|
