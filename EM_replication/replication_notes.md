@@ -8,7 +8,7 @@
 | 4     | -519.77   | -375         | 144.77     |
 | 5     | -493.95   | -371         | 122.95     |
 
-Questions for Mikhail:
-- Why do I get the zero taylor poly error?
-- What does it mean if my LL is consistently lower?
-- Could I test x_i with closed form solution?
+Possible troubleshootin
+- For taylor poly error: possible some value is too big or too small, look at value of solutions when this crashes
+- First try to test with closed form x_i, confirm number
+- Also try calculating small handmade dataset by hand and confirming that numbers match when running through the algo
