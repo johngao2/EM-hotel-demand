@@ -359,14 +359,16 @@ void m_step()
 	// update current optimal x vector and difference vector
 	for (int i = 0; i < n_types; i++)
 	{
-		x_diff_vec[i] = current_x_vec[i] - solution.x[i];
+		x_diff_vec[i] = std::abs(current_x_vec[i] - solution.x[i]);
 		current_x_vec[i] = solution.x[i];
 	}
 
 	std::cout << "CURRENT OBJECTIVE VALUE: " << solution.obj_value << std::endl;
+
 	// printVector("DIFFERENCE", x_diff_vec, n_types, 3, 5);
 }
 
+// alternate m_step function for testing
 void closed_form_m_step()
 {
 	// calculate sum of m vec
@@ -389,9 +391,24 @@ void closed_form_m_step()
 	double LL;
 	for (int i = 0; i < n_types; i++)
 	{
-		LL += m_vec[i] * log10(current_x_vec[i]);
+		LL += m_vec[i] * log(current_x_vec[i]);
 	}
 	std::cout << "Current LL:" << LL << std::endl;
+}
+
+// calculates different LL function from (2)
+double real_LL(int ** mu_matrix){
+	double LL = 0;
+	for (int t = 0; t < n_times; t++){
+		double temp = 0;	// temp variable to store xi's for one time period
+		for (int i = 0; i < n_types; i++){
+			temp += current_x_vec[i] * mu_matrix[t][i];
+		}
+		temp = log10(temp);
+		LL += temp;
+	}
+
+	return LL;
 }
 
 int main()
@@ -427,16 +444,21 @@ int main()
 		// M step:
 		m_step();
 
+		double LL;
+		LL = real_LL(mu_matrix);
+		std::cout << "CURRENT LL" << LL << std::endl;
+
 		// find max difference of solution, exit loop if small enough
 		maxdiff = *std::max_element(x_diff_vec, x_diff_vec + n_types);
 		if (maxdiff < 1e-6)
 		{
 			done = 1;
 		}
+		//printVector("CURRENT SOLUTION", current_x_vec, n_types, 3, 5);
+
 	}
-	// printVector("CURRENT SOLUTION", current_x_vec, n_types, 3, 5);
 
 	std::cout << "TEST DONE" << std::endl;
 	return done;
 	//Compatability code for ipopt ##################################################
-}
+} 

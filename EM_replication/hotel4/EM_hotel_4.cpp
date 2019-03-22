@@ -371,6 +371,24 @@ void m_step()
 	// printVector("DIFFERENCE", x_diff_vec, n_types, 3, 5);
 }
 
+// calculates different LL function from (2)
+double real_LL(int **mu_matrix)
+{
+	double LL = 0;
+	for (int t = 0; t < n_times; t++)
+	{
+		double temp = 0; // temp variable to store xi's for one time period
+		for (int i = 0; i < n_types; i++)
+		{
+			temp += current_x_vec[i] * mu_matrix[t][i];
+		}
+		temp = log(temp);
+		LL += temp;
+	}
+
+	return LL;
+}
+
 int main()
 {
 	// load data and preprocessing
@@ -403,6 +421,10 @@ int main()
 		}
 		// M step:
 		m_step();
+
+		double LL;
+		LL = real_LL(mu_matrix);
+		std::cout << "CURRENT LL" << LL << std::endl;
 
 		// find max difference of solution, exit loop if small enough
 		maxdiff = *std::max_element(x_diff_vec, x_diff_vec + n_types);

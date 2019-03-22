@@ -8,8 +8,8 @@ Step 2: Replicate EM algorithm (van Ryzin, Vulcano 2017) on transaction data to 
 ... **Subtasks:**  
 - ~~Implement Uncensored EM on van Ryzin's hotel data, compare results.~~ **DONE, BUT WITH ISSUES**
   - ~~Check with closed form maximizer~~ **MAXIMIZER ISN'T THE PROBLEM**
-  - Debug vanishing taylor coefficient (scaling probably works)
   - If bug still isnt' solved, run through algo on small by hand and track every number, then compare with algo output
+  - Debug vanishing taylor coefficient (scaling probably works)
 - Implement censored EM on van Ryzin's simulated data, compare results.
 - Extend censored EM to work on van Ryzin's hotel data.
 
