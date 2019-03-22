@@ -194,7 +194,7 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 			ranking = sigma_matrix[i];
 			for (int k = 1; k < n_options + 1; k++) // iterate over each option
 			{
-				bool available = avail_matrix[t][k];
+				bool available = avail_matrix[t][k - 1];
 				if (available == 1 && k != j_t) // if item is available and not selected
 				{
 					if (sigma_matrix[i][k] < sigma_matrix[i][j_t])

@@ -7,9 +7,9 @@
 #include <cppad/ipopt/solve.hpp>
 #include "csv.h"
 
-#define n_times 211 // number of time steps
+#define n_times 211  // number of time steps
 #define n_options 12 // number of products
-#define n_types 23  // number of customer types
+#define n_types 23   // number of customer types
 
 namespace
 {
@@ -194,7 +194,7 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 			ranking = sigma_matrix[i];
 			for (int k = 1; k < n_options + 1; k++) // iterate over each option
 			{
-				bool available = avail_matrix[t][k];
+				bool available = avail_matrix[t][k - 1];
 				if (available == 1 && k != j_t) // if item is available and not selected
 				{
 					if (sigma_matrix[i][k] < sigma_matrix[i][j_t])
@@ -371,6 +371,24 @@ void m_step()
 	// printVector("DIFFERENCE", x_diff_vec, n_types, 3, 5);
 }
 
+// calculates different LL function from (2)
+double real_LL(int **mu_matrix)
+{
+	double LL = 0;
+	for (int t = 0; t < n_times; t++)
+	{
+		double temp = 0; // temp variable to store xi's for one time period
+		for (int i = 0; i < n_types; i++)
+		{
+			temp += current_x_vec[i] * mu_matrix[t][i];
+		}
+		temp = log(temp);
+		LL += temp;
+	}
+
+	return LL;
+}
+
 int main()
 {
 	// load data and preprocessing
@@ -403,6 +421,10 @@ int main()
 		}
 		// M step:
 		m_step();
+
+		double LL;
+		LL = real_LL(mu_matrix);
+		std::cout << "CURRENT LL" << LL << std::endl;
 
 		// find max difference of solution, exit loop if small enough
 		maxdiff = *std::max_element(x_diff_vec, x_diff_vec + n_types);

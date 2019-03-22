@@ -4,12 +4,12 @@ Step 1: ~~Implement simple multinomial logit go get familiar with likelihood max
 - ~~Run IPOPT solver on single problem.~~ **DONE**
 - ~~Run IPOPT solver repeatedly on changing problem formulations.~~ **DONE** 
 
-Step 2: Replicate EM algorithm (van Ryzin, Vulcano 2017) on transaction data to forecast customer preferences given product assortments at each time step, **and do it quick**. Use on simulated and real datasets from the original paper, and compare results.  *(EM_replication > EM_test.cpp)*  
+~~Step 2: Replicate EM algorithm (van Ryzin, Vulcano 2017) on transaction data to forecast customer preferences given product assortments at each time step, **and do it quick**. Use on simulated and real datasets from the original paper, and compare results.~~  *(EM_replication > EM_test.cpp)*  
 ... **Subtasks:**  
 - ~~Implement Uncensored EM on van Ryzin's hotel data, compare results.~~ **DONE, BUT WITH ISSUES**
   - ~~Check with closed form maximizer~~ **MAXIMIZER ISN'T THE PROBLEM**
-  - If bug still isnt' solved, run through algo on small by hand and track every number, then compare with algo output
-  - Debug vanishing taylor coefficient (scaling probably works)
+  - ~~If bug still isnt' solved, run through algo on small by hand and track every number, then compare with algo output~~ **FIXED IT**
+  - ~~Debug vanishing taylor coefficient (scaling probably works)~~ **NOT A PROBLEM; HAPPENS WAY AFTER CONVERGENCE**
 - Implement censored EM on van Ryzin's simulated data, compare results.
 - Extend censored EM to work on van Ryzin's hotel data.
 

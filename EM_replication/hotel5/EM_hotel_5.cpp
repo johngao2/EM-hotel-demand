@@ -190,7 +190,7 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 			ranking = sigma_matrix[i];
 			for (int k = 1; k < n_options + 1; k++) // iterate over each option
 			{
-				bool available = avail_matrix[t][k];
+				bool available = avail_matrix[t][k-1];	// need to subtract 1 from k due to 1-indexed sigma matrix
 				if (available == 1 && k != j_t) // if item is available and not selected
 				{
 					if (sigma_matrix[i][k] < sigma_matrix[i][j_t])
@@ -277,7 +277,7 @@ class FG_eval
 		//building LL function
 		for (int i = 0; i < n_types; i++)
 		{
-			fg[0] += m_vec[i] * log10(x[i]);
+			fg[0] += m_vec[i] * log(x[i]);
 		}
 		// constraint that sum of x's = 1
 		for (int i = 0; i < n_types; i++)
@@ -404,7 +404,7 @@ double real_LL(int ** mu_matrix){
 		for (int i = 0; i < n_types; i++){
 			temp += current_x_vec[i] * mu_matrix[t][i];
 		}
-		temp = log10(temp);
+		temp = log(temp);
 		LL += temp;
 	}
 
@@ -420,10 +420,10 @@ int main()
 	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
 	// Data import debugging prints ##################################################
 	{
-		// printMatrix("PREFERENCE MATRIX:", sigma_matrix, 10, n_options + 1, 3);
-		// printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, n_options, 3);
-		// printVector("TRANSACTION VECTOR:", trans_vec, 10, 3);
-		// printMatrix("MU MATRIX:", mu_matrix, 20, n_types, 3);
+		printMatrix("PREFERENCE MATRIX:", sigma_matrix, 10, n_options + 1, 3);
+		printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, n_options, 3);
+		printVector("TRANSACTION VECTOR:", trans_vec, 10, 3);
+		printMatrix("MU MATRIX:", mu_matrix, 20, n_types, 3);
 	}
 
 	std::fill_n(current_x_vec, n_types, 1);
