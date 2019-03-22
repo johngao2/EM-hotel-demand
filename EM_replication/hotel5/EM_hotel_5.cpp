@@ -277,7 +277,7 @@ class FG_eval
 		//building LL function
 		for (int i = 0; i < n_types; i++)
 		{
-			fg[0] += m_vec[i] * log(x[i]);
+			fg[0] += m_vec[i] * log10(x[i]);
 		}
 		// constraint that sum of x's = 1
 		for (int i = 0; i < n_types; i++)
@@ -367,6 +367,33 @@ void m_step()
 	// printVector("DIFFERENCE", x_diff_vec, n_types, 3, 5);
 }
 
+void closed_form_m_step()
+{
+	// calculate sum of m vec
+	double m_sum;
+	for (int i = 0; i < n_types; i++)
+	{
+		m_sum += m_vec[i];
+	}
+
+	// update x vec using closed form solution
+	double new_x;
+	for (int i = 0; i < n_types; i++)
+	{
+		new_x = m_vec[i] / m_sum;
+		x_diff_vec[i] = std::abs(new_x - current_x_vec[i]);
+		current_x_vec[i] = new_x;
+	}
+
+	// calculate objective value
+	double LL;
+	for (int i = 0; i < n_types; i++)
+	{
+		LL += m_vec[i] * log10(current_x_vec[i]);
+	}
+	std::cout << "Current LL:" << LL << std::endl;
+}
+
 int main()
 {
 	// load data and preprocessing
@@ -385,7 +412,7 @@ int main()
 	std::fill_n(current_x_vec, n_types, 1);
 	double maxdiff = 1;
 
-	// EM loop starts here (currently running once for testing)
+	// EM loop starts here
 	bool done = 0;
 	while (!done)
 	{
