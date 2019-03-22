@@ -6,7 +6,7 @@ Step 1: ~~Implement simple multinomial logit go get familiar with likelihood max
 
 Step 2: Replicate EM algorithm (van Ryzin, Vulcano 2017) on transaction data to forecast customer preferences given product assortments at each time step, **and do it quick**. Use on simulated and real datasets from the original paper, and compare results.  *(EM_replication > EM_test.cpp)*  
 ... **Subtasks:**  
-- ~~Implement Uncensored EM on van Ryzin's hotel data, compare results.~~ **DONE, BUT WITH ISSUES*
+- ~~Implement Uncensored EM on van Ryzin's hotel data, compare results.~~ **DONE, BUT WITH ISSUES**
   - Check with closed form maximizer
   - Debug vanishing taylor coefficient (scaling probably works)
   - If bug still isnt' solved, run through algo on small by hand and track every number, then compare with algo output
