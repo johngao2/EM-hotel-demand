@@ -15,7 +15,7 @@ Step 2: Replicate EM algorithm (van Ryzin, Vulcano 2017) on transaction data to 
 
 Step 3: Extend van Ryzin & Vulcano to include seasonality and be fast enough to work on hotel problems where the assortment size is gigantic.
 
-## Background:  
+## References:  
 **Newer, problem-specific EM algorithm (what I'm trying to reproduce and extend):**  
 van Ryzin, G., & Vulcano, G. (2017). "Technical Note: an Expectation-Maximization Method to
 Estimate a Rank-based Choice Model of Demand", *Operations Research 65 (2017), no. 2*, 396–407. Retrieved from https://pubsonline.informs.org/doi/pdf/10.1287/opre.2016.1559
