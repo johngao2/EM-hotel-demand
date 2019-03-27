@@ -1,8 +1,0 @@
-1, King Room 1 Non-Smoking, 141
-2, 2 Double Beds Room 1 Non-Smoking, 150
-3, 2 Double Beds Room 3 Non-Smoking, 100
-4, 2 Double Beds Room 2 Non-Smoking, 165
-5, Double Bed Room 1 Non-Smoking, 226
-6, Suite 2 Non-Smoking, 228
-7, Suite 1 Non-Smoking, 172
-8, King Room 2 Non-Smoking, 155
