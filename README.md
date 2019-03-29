@@ -4,7 +4,7 @@
 - Run IPOPT solver on single problem. **DONE**
 - Run IPOPT solver repeatedly on changing problem formulations. **DONE** 
 
-#### Step 2: Replicate EM algorithm (van Ryzin, Vulcano 2017) on transaction data to forecast customer preferences given product assortments at each time step, **and do it quick**. Use on simulated and real datasets from the original paper, and compare results. *(censored_EM_replication > hotel5 > EM_hotel_5.cpp)*  **DONE**  
+#### Step 2: Replicate EM algorithm (van Ryzin, Vulcano 2017) on transaction data to forecast customer preferences given product assortments at each time step, **and do it quick**. Use on simulated and real datasets from the original paper, and compare results. *(censored_EM_replication > hotel5 > EM_hotel_5.cpp)*
 **Subtasks:** 
 - Implement Uncensored EM on van Ryzin's hotel data, compare results. **DONE, BUT WITH ISSUES**
   - Check with closed form maximizer. **DONE; MAXIMIZER ISN'T THE PROBLEM**
