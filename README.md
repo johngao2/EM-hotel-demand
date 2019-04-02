@@ -11,7 +11,9 @@
   - If bug still isn't solved, run through algo on small by hand and track every number, then compare with algo output. **DONE; RESULTS REPLICATED, BUG SOLVED**
   - Debug vanishing taylor coefficient (scaling probably works) **DONE; NOT REALLY A PROBLEM ANYMORE; HAPPENS WAY AFTER CONVERGENCE**
 - Implement censored EM on van Ryzin's simulated data, compare results.
-  - Need to first simulate the data myself, following steps outlined in 5.1 (van Ryzin, Vulcano 2017)
+  - Need to first simulate the data myself, following steps outlined in 5.1 (van Ryzin, Vulcano 2017) **DONE**
+  - Implement censored algo on my own simulated data
+  - Produce graphs to see if I recovered true variables as well as paper
 - Extend censored EM to work on van Ryzin's hotel data.
 
 #### Step 3: Extend van Ryzin & Vulcano to include seasonality and be fast enough to work on hotel problems where the assortment size is gigantic.
