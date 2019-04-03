@@ -44,6 +44,8 @@ def generate_types(N, items):
     
     types['cust_type'] = types.index + 1
     types = types.set_index('cust_type')
+
+    types = types.astype(int)
         
     return types
 
@@ -78,6 +80,9 @@ def generate_availability(T, n, items):
     # add time index
     avail['T'] = avail.index + 1
     avail = avail.set_index('T')
+
+    avail = avail.astype(int)
+
     return avail
 
 def generate_transactions(T, types, avail, lam, probs):
@@ -111,6 +116,8 @@ def generate_transactions(T, types, avail, lam, probs):
     # add time index
     trans['T'] = trans.index + 1
     trans = trans.set_index('T')
+
+    trans = trans.astype(int)
     
     return trans
 
@@ -152,7 +159,6 @@ if __name__ == '__main__':
                 simulate_dataset(n, lambd, t, N, sample_num)
                 
     print('DONE!')
-
 
 
 
