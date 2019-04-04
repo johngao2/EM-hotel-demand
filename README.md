@@ -13,7 +13,7 @@
 - Implement censored EM on van Ryzin's simulated data, compare results.
   - Need to first simulate the data myself, following steps outlined in 5.1 (van Ryzin, Vulcano 2017) **DONE**
   - Implement censored algo on my own simulated data
-  - Produce graphs to see if I recovered true variables as well as paper
+  - Produce graphs to see if I recovered true variables as well as their paper
 - Extend censored EM to work on van Ryzin's hotel data.
 
 #### Step 3: Extend van Ryzin & Vulcano to include seasonality and be fast enough to work on hotel problems where the assortment size is gigantic.
