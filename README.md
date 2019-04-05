@@ -17,6 +17,13 @@
 - Extend censored EM to work on van Ryzin's hotel data.
 
 #### Step 3: Extend van Ryzin & Vulcano to include seasonality and be fast enough to work on hotel problems where the assortment size is gigantic.
+**Subtasks:**
+- Review R GLM for poission regression, what kind of link functions are reasonable?
+  - Think of variables we need to feed into GLM to model seasonality (only need to worry about time related stuff; one seasonality for booking, one for arrival)
+- Lambda will depend on when arrival occurs and booking
+- Start with 2 weekend pair (which can shift) + something with a room types
+- Try lasso penalty in ipopt
+  - min f(x) + alpha(sum(y)) where -y_i <= x_i <= y_i
 
 ## References:  
 **Newer, problem-specific EM algorithm (what I'm trying to reproduce and extend):**  
