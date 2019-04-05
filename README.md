@@ -12,7 +12,7 @@
   - Debug vanishing taylor coefficient (scaling probably works) **DONE; NOT REALLY A PROBLEM ANYMORE; HAPPENS WAY AFTER CONVERGENCE**
 - Implement censored EM on van Ryzin's simulated data, compare results.
   - Need to first simulate the data myself, following steps outlined in 5.1 (van Ryzin, Vulcano 2017) **DONE**
-  - Implement censored algo on my own simulated data
+  - Implement censored algo on my own simulated data **DONE, SEEMS TO RECOVER PARAMS WELL**
   - Produce graphs to see if I recovered true variables as well as their paper
 - Extend censored EM to work on van Ryzin's hotel data.
 
