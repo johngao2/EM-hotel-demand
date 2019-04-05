@@ -16,8 +16,8 @@ namespace
 using CppAD::AD;
 
 double m_vec[n_types];		   // m vector
-double current_x_vec[n_times]; // current solution vector
-double x_diff_vec[n_times];	// tracks changes in solution
+double current_x_vec[n_types]; // current solution vector
+double x_diff_vec[n_types];	// tracks changes in solution
 
 // helper function for printing matrices (debugging)
 template <typename T>
@@ -426,6 +426,7 @@ int main()
 		printMatrix("MU MATRIX:", mu_matrix, 20, n_types, 3);
 	}
 
+	// initialize x vec
 	std::fill_n(current_x_vec, n_types, 1);
 	double maxdiff = 1;
 
@@ -438,7 +439,7 @@ int main()
 		estimate_m_vec(p_sigma_matrix);
 		// E-step debugging prints ##################################################
 		{
-			// printMatrix("P_SIGMA MATRIX:", p_sigma_matrix, n_times, n_types, 5);
+			// printMatrix("P_SIGMA MATRIX:", p_sigma_matrix, 10, n_types, 5);
 			// printVector("M_VECTOR:", m_vec, n_types, 5);
 		}
 		// M step:
@@ -460,5 +461,4 @@ int main()
 
 	std::cout << "TEST DONE" << std::endl;
 	return done;
-	//Compatability code for ipopt ##################################################
 } 

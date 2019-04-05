@@ -1,5 +1,6 @@
 // EM implemented for Hotel 5 dataset
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <algorithm>
 #include <iterator>
@@ -8,16 +9,20 @@
 #include "csv.h"
 
 #define n_times 10000 // number of time steps
-#define n_options 15 // number of products
-#define n_types 10  // number of customer types
+#define n_options 15  // number of products
+#define n_types 10	// number of customer types
+
+// GLOBAL VARS
+double m_vec[n_types];		   // m_vector, counts number of occurences of a type n arrival
+double current_x_vec[n_times]; // current solution vector
+double x_diff_vec[n_times];	// tracks changes in solution
+double a_vec[n_times];		   // a_vector, tracks if there was an arrival in a period
+double lambda;				   // arrival parameter
+int n_purch;				   // tracks number total number of purchases
 
 namespace
 {
 using CppAD::AD;
-
-double m_vec[n_types];		   // m vector
-double current_x_vec[n_times]; // current solution vector
-double x_diff_vec[n_times];	// tracks changes in solution
 
 // helper function for printing matrices (debugging)
 template <typename T>
@@ -135,7 +140,7 @@ int **import_availability(const char *avail_filename)
 {
 	io::CSVReader<16> in(avail_filename);
 	in.read_header(io::ignore_no_column, "T", "prod1", "prod2", "prod3",
-				   "prod4", "prod5", "prod6", "prod7", "prod8", "prod9", 
+				   "prod4", "prod5", "prod6", "prod7", "prod8", "prod9",
 				   "prod10", "prod11", "prod12", "prod13", "prod14", "prod15");
 	int t;
 	int prod[n_options];
@@ -143,7 +148,7 @@ int **import_availability(const char *avail_filename)
 	int **avail_matrix = 0;
 	avail_matrix = new int *[n_times];
 	while (in.read_row(t, prod[0], prod[1], prod[2], prod[3], prod[4],
-					   prod[5], prod[6], prod[7], prod[8], prod[9], 
+					   prod[5], prod[6], prod[7], prod[8], prod[9],
 					   prod[10], prod[11], prod[12], prod[13], prod[14]))
 	{
 		avail_matrix[row_counter] = new int[n_options];
@@ -195,8 +200,8 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 			ranking = sigma_matrix[i];
 			for (int k = 1; k < n_options + 1; k++) // iterate over each option
 			{
-				bool available = avail_matrix[t][k-1];	// need to subtract 1 from k due to 1-indexed sigma matrix
-				if (available == 1 && k != j_t) // if item is available and not selected
+				bool available = avail_matrix[t][k - 1]; // need to subtract 1 from k due to 1-indexed sigma matrix
+				if (available == 1 && k != j_t)			 // if item is available and not selected
 				{
 					if (sigma_matrix[i][k] < sigma_matrix[i][j_t])
 					// if any item is ranked better than chosen item
@@ -214,6 +219,18 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 		}
 	}
 	return mu_matrix;
+}
+
+// literally just counts number of purchases
+void count_purchases(int *trans_vec)
+{
+	for (int t = 0; t < n_times; t++)
+	{
+		if (trans_vec[t] != 0)
+		{
+			n_purch++;
+		}
+	}
 }
 
 // build p_sigma matrix (calculates customer type probabilities
@@ -252,9 +269,41 @@ double **build_cust_type_probs(int **mu_matrix)
 	return p_sigma_matrix;
 }
 
-// estimate m vector
+// updates a_t estimates based on compatible types and transaction data
+void update_arrival_estimates(int *trans_vec, int **mu_matrix)
+{
+	for (int t = 0; t < n_times; t++)
+	{
+		if (trans_vec[t] != 0) // case 1: definitely arrival, item was purchased
+		{
+			a_vec[t] = 1;
+		}
+		else
+		{
+			int num_compat_types = 0;
+			for (int i = 0; i < n_types; i++)
+			{
+				num_compat_types += mu_matrix[t][i];
+			}
+			if (num_compat_types == 0) // case 2: definitely non-arrival, no compatible types
+			{
+				a_vec[t] = 0;
+			}
+			else // case 3: might have been an arrival, update a_t with probability
+			{
+				double sum_compat_probs = 0; // sum of probabilities of compatible types
+				for (int i = 0; i < n_types; i++)
+				{
+					sum_compat_probs += current_x_vec[i] * mu_matrix[t][i];
+				}
+				a_vec[t] = (lambda * sum_compat_probs) / (lambda * sum_compat_probs + (1 - lambda));
+			}
+		}
+	}
+}
+
+// estimate m vector, last part of e-step
 // returns m_vec: length N
-// M_VEC IS A GLOBAL VARIABLE
 void estimate_m_vec(double **p_sigma_matrix)
 {
 	for (int i = 0; i < n_types; i++)
@@ -262,7 +311,7 @@ void estimate_m_vec(double **p_sigma_matrix)
 		m_vec[i] = 0;
 		for (int t = 0; t < n_times; t++)
 		{
-			m_vec[i] += p_sigma_matrix[t][i];
+			m_vec[i] += a_vec[t] * p_sigma_matrix[t][i];
 		}
 	}
 }
@@ -275,15 +324,27 @@ class FG_eval
 	void operator()(ADvector &fg, const ADvector &x)
 	{
 		assert(fg.size() == 2);
-		assert(x.size() == n_types);
+		assert(x.size() == n_types + 1);
 
 		// printVector("m_vec:", m_vec, n_types, 4, 5);
 
-		//building LL function
+		//x[0:n_types) represents type probs, x[n_types] is lambda
+
+		// add type probs to objective
 		for (int i = 0; i < n_types; i++)
 		{
 			fg[0] += m_vec[i] * log(x[i]);
 		}
+		// add lambda terms to objective
+		double sum_ambiguous_a = 0;
+		for (int t = 0; t < n_times; t++)
+		{
+			if (a_vec[t] != 1)
+			{
+				sum_ambiguous_a += a_vec[t];
+			}
+		}
+		fg[0] += (n_purch + sum_ambiguous_a) * log(x[n_types]) + ((n_times - n_purch) - sum_ambiguous_a) * log(1 - x[n_types]);
 		// constraint that sum of x's = 1
 		for (int i = 0; i < n_types; i++)
 		{
@@ -303,15 +364,15 @@ void m_step()
 	size_t i;
 	typedef CPPAD_TESTVECTOR(double) Dvector;
 
-	// number of independent variables (domain dimension for f and g)
-	size_t nx = n_types;
+	// number of independent variables n_types + 1 extra for lambda
+	size_t nx = n_types + 1;
 	// number of constraints (range dimension for g)
 	size_t ng = 1;
 	// initial value of the independent variables
 	Dvector xi(nx);
-	for (i = 0; i < n_types; i++)
+	for (i = 0; i < n_types + 1; i++)
 	{
-		xi[i] = 1;
+		xi[i] = 0.1;
 	}
 	// lower and upper limits for x
 	Dvector xl(nx), xu(nx);
@@ -361,14 +422,16 @@ void m_step()
 	// printVector("PAST SOLUTION", current_x_vec, n_types, 3, 5);
 	// printVector("NEW SOLUTION", solution.x, n_types, 3, 5);
 
-	// update current optimal x vector and difference vector
+	// update current optimal x vector and difference vector, as well as lambda
 	for (int i = 0; i < n_types; i++)
 	{
 		x_diff_vec[i] = std::abs(current_x_vec[i] - solution.x[i]);
 		current_x_vec[i] = solution.x[i];
 	}
+	lambda = solution.x[n_types];
 
 	std::cout << "CURRENT OBJECTIVE VALUE: " << solution.obj_value << std::endl;
+	// std::cout << "CURR LAMBDA: " << solution.x[n_types] << std::endl;
 
 	// printVector("DIFFERENCE", x_diff_vec, n_types, 3, 5);
 }
@@ -398,15 +461,17 @@ void closed_form_m_step()
 	{
 		LL += m_vec[i] * log(current_x_vec[i]);
 	}
-	std::cout << "Current LL:" << LL << std::endl;
 }
 
 // calculates different LL function using equation (2)
-double real_LL(int ** mu_matrix){
+double real_LL(int **mu_matrix)
+{
 	double LL = 0;
-	for (int t = 0; t < n_times; t++){
-		double temp = 0;	// temp variable to store xi's for one time period
-		for (int i = 0; i < n_types; i++){
+	for (int t = 0; t < n_times; t++)
+	{
+		double temp = 0; // temp variable to store xi's for one time period
+		for (int i = 0; i < n_types; i++)
+		{
 			temp += current_x_vec[i] * mu_matrix[t][i];
 		}
 		temp = log(temp);
@@ -419,19 +484,29 @@ double real_LL(int ** mu_matrix){
 int main()
 {
 	// load data and preprocessing
-	int **sigma_matrix = import_prefs("../data/simulated_data/l0.8/10000/1/types.csv");
-	int **avail_matrix = import_availability("../data/simulated_data/l0.8/10000/1/avail.csv");
-	int *trans_vec = import_transactions("../data/simulated_data/l0.8/10000/1/trans.csv");
+	int **sigma_matrix = import_prefs("../data/simulated_data/l0.8/10000/2/types.csv");
+	int **avail_matrix = import_availability("../data/simulated_data/l0.8/10000/2/avail.csv");
+	int *trans_vec = import_transactions("../data/simulated_data/l0.8/10000/2/trans.csv");
 	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
 	// Data import debugging prints ##################################################
 	{
-		printMatrix("PREFERENCE MATRIX:", sigma_matrix, 10, n_options + 1, 3);
-		printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, n_options, 3);
-		printVector("TRANSACTION VECTOR:", trans_vec, 10, 3);
-		printMatrix("MU MATRIX:", mu_matrix, 20, n_types, 3);
+		// printMatrix("PREFERENCE MATRIX:", sigma_matrix, 10, n_options + 1, 3);
+		// printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, n_options, 3);
+		// printVector("TRANSACTION VECTOR:", trans_vec, 10, 3);
+		// printMatrix("MU MATRIX:", mu_matrix, 20, n_types, 3);
 	}
 
-	std::fill_n(current_x_vec, n_types, 1);
+	// init: set a_vec to 0 x_vec to 1/N, lambda to 0.5, count purchases
+	std::fill_n(a_vec, n_times, 0);
+	std::fill_n(current_x_vec, n_types, 1.0 / n_types);
+	lambda = 0.3;
+	count_purchases(trans_vec);
+	std::cout << "NUM_PURCHASES: " << n_purch << std::endl;
+	// initialization debugging prints:
+	{
+		// printVector("A_VEC", a_vec, 10, 5);
+		// printVector("current_x_vec", current_x_vec, 10, 5);
+	}
 	double maxdiff;
 
 	// EM loop starts here
@@ -439,27 +514,26 @@ int main()
 	while (!done)
 	{
 		// E step:
+		// update cust type probs
 		double **p_sigma_matrix = build_cust_type_probs(mu_matrix);
+		// update a_t predictions
+		update_arrival_estimates(trans_vec, mu_matrix);
+		//printVector("A_VEC", a_vec, n_times, 5);
 		estimate_m_vec(p_sigma_matrix);
-		// E-step debugging prints ##################################################
-		{
-			// printMatrix("P_SIGMA MATRIX:", p_sigma_matrix, n_times, n_types, 5);
-			// printVector("M_VECTOR:", m_vec, n_types, 5);
-		}
+
 		// M step:
 		m_step();
 
 		// find max difference of solution, exit loop if small enough
 		maxdiff = *std::max_element(x_diff_vec, x_diff_vec + n_types);
-		if (maxdiff < 1e-6)
+		if (maxdiff < 1e-4)
 		{
 			done = 1;
 		}
-		//printVector("CURRENT SOLUTION", current_x_vec, n_types, 3, 5);
-
+		// printVector("CURRENT SOLUTION", current_x_vec, n_types, 3, 5);
 	}
-	printVector("X_VEC", current_x_vec, n_types, 3);
+	printVector("FINAL X_VEC", current_x_vec, n_types, 5, 5);
+	std::cout << "FINAL LAMBDA: " << lambda << std::endl;
 	std::cout << "TEST DONE" << std::endl;
-	return done;
-	//Compatability code for ipopt ##################################################
-} 
+	return 1;
+}
