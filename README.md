@@ -21,7 +21,7 @@
 - Lambda will depend on when arrival occurs and booking
 - Start with 2 weekend pair (which can shift) + something with a room types
 - Try lasso penalty in ipopt
-  - min f(x) + alpha(sum(y)) where -y_i <= x_i <= y_i, use this since solvers HATE ab
+  - min f(x) + alpha(sum(y)) where -y_i <= x_i <= y_i, use this since solvers HATE abs
 
 ## References:  
 **Newer, problem-specific EM algorithm (what I'm trying to reproduce and extend):**  
