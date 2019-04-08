@@ -4,7 +4,7 @@
 - Run IPOPT solver on single problem. **DONE**
 - Run IPOPT solver repeatedly on changing problem formulations. **DONE** 
 
-#### Step 2: Replicate EM algorithm (van Ryzin, Vulcano 2017) on transaction data to forecast customer preferences given product assortments at each time step, **and do it quick**. Use on simulated and real datasets from the original paper, and compare results. *(censored_EM_replication > hotel5 > EM_hotel_5.cpp)*
+#### Step 2: Replicate EM algorithm (van Ryzin, Vulcano 2017) on transaction data to forecast customer preferences given product assortments at each time step, **and do it quick**. Use on simulated and real datasets from the original paper, and compare results. *(censored_EM_replication > hotel5 > EM_hotel_5.cpp)* **DONE**
 **Subtasks:** 
 - Implement Uncensored EM on van Ryzin's hotel data, compare results. **DONE, BUT WITH ISSUES**
   - Check with closed form maximizer. **DONE; MAXIMIZER ISN'T THE PROBLEM**
@@ -13,8 +13,6 @@
 - Implement censored EM on van Ryzin's simulated data, compare results.
   - Need to first simulate the data myself, following steps outlined in 5.1 (van Ryzin, Vulcano 2017) **DONE**
   - Implement censored algo on my own simulated data **DONE, SEEMS TO RECOVER PARAMS WELL**
-  - Produce graphs to see if I recovered true variables as well as their paper
-- Extend censored EM to work on van Ryzin's hotel data.
 
 #### Step 3: Extend van Ryzin & Vulcano to include seasonality and be fast enough to work on hotel problems where the assortment size is gigantic.
 **Subtasks:**
@@ -23,7 +21,7 @@
 - Lambda will depend on when arrival occurs and booking
 - Start with 2 weekend pair (which can shift) + something with a room types
 - Try lasso penalty in ipopt
-  - min f(x) + alpha(sum(y)) where -y_i <= x_i <= y_i
+  - min f(x) + alpha(sum(y)) where -y_i <= x_i <= y_i, use this since solvers HATE ab
 
 ## References:  
 **Newer, problem-specific EM algorithm (what I'm trying to reproduce and extend):**  
