@@ -22,6 +22,19 @@
 - Start with 2 weekend pair (which can shift) + something with a room types
 - Try lasso penalty in ipopt
   - min f(x) + alpha(sum(y)) where -y_i <= x_i <= y_i, use this since solvers HATE abs
+  
+ ### Derivation notes
+ - booking:
+  - constant lambda during 2 week period with weekly seasonality pattern
+  - use multiplicative to preserve signs
+ - arrival:
+  - each customer type consists of a pair of weekends (e.g. one weekend vs weekend after)
+  - most important thing to consider is type; weekend pair used for tiebreakers
+ - creating trans data:
+  - num sales periods per day = max num bookings per day
+  - try to put all arrivals at beginning or end, see which works better
+ - creating availability: 
+  - matrix where each row is booking data or cancel data, each col is possible future arrival date
 
 ## References:  
 **Newer, problem-specific EM algorithm (what I'm trying to reproduce and extend):**  
