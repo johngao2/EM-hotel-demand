@@ -31,7 +31,7 @@
 - booking:
   - for now, constant lambda during 2 week period with weekly seasonality pattern
   - use multiplicative to preserve signs
- - arrival:
+- arrival:
   - Start with 2 weekend pair (which can shift) + something with a room types
   - each customer type consists of a pair of weekends (e.g. one weekend vs weekend after)
   - most important thing to consider is type; weekend pair used for tiebreakers
