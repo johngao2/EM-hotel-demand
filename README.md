@@ -16,25 +16,25 @@
 
 #### Step 3: Extend van Ryzin & Vulcano to include seasonality and be fast enough to work on hotel problems where the assortment size is gigantic.
 **Subtasks:**
+- Create availability table for Cabot data, where each row is either a booking/cancellation, and each col is a possible stay date
+- Create transaction vector, where each row is a subperiod of day (periods/day = max bookings in 1 day):
+  - One version will have all bookings at beginning of day, other will have all bookings at end of day
+- Create customer types:
+  - For now, each customer type only depends on room type (add time features later)
+  
+### Other notes:
 - Review R GLM for poission regression, what kind of link functions are reasonable?
   - Think of variables we need to feed into GLM to model seasonality (only need to worry about time related stuff; one seasonality for booking, one for arrival)
 - Lambda will depend on when arrival occurs and booking
-- Start with 2 weekend pair (which can shift) + something with a room types
 - Try lasso penalty in ipopt
   - min f(x) + alpha(sum(y)) where -y_i <= x_i <= y_i, use this since solvers HATE abs
-  
- ### Derivation notes
- - booking:
-  - constant lambda during 2 week period with weekly seasonality pattern
+- booking:
+  - fopr now, constant lambda during 2 week period with weekly seasonality pattern
   - use multiplicative to preserve signs
  - arrival:
+  - Start with 2 weekend pair (which can shift) + something with a room types
   - each customer type consists of a pair of weekends (e.g. one weekend vs weekend after)
   - most important thing to consider is type; weekend pair used for tiebreakers
- - creating trans data:
-  - num sales periods per day = max num bookings per day
-  - try to put all arrivals at beginning or end, see which works better
- - creating availability: 
-  - matrix where each row is booking data or cancel data, each col is possible future arrival date
 
 ## References:  
 **Newer, problem-specific EM algorithm (what I'm trying to reproduce and extend):**  
