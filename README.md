@@ -22,6 +22,8 @@
   - Each cell is a date range/room type pair, can simplify later
 - Create customer types:
   - For now, each customer type only depends on room type (add time features later)
+  - Group rooms by similarity, cheap to expensive or expensive to cheap
+  - 
   
 ### Other notes:
 - Review R GLM for poission regression, what kind of link functions are reasonable?
