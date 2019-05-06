@@ -16,9 +16,10 @@
 
 #### Step 3: Extend van Ryzin & Vulcano to include seasonality and be fast enough to work on hotel problems where the assortment size is gigantic.
 **Subtasks:**
-- Create availability table for Cabot data, where each row is either a booking/cancellation, and each col is a possible stay date
+- Create availability table for Cabot data, where each row is either a booking/cancellation, and each col is a possible stay date/room type combination
 - Create transaction vector, where each row is a subperiod of day (periods/day = max bookings in 1 day):
-  - One version will have all bookings at beginning of day, other will have all bookings at end of day
+  - One version will have all bookings at beginning of day, other will have all bookings at end of day **done for pre, do post later**  
+  - Each cell is a date range/room type pair, can simplify later
 - Create customer types:
   - For now, each customer type only depends on room type (add time features later)
   
