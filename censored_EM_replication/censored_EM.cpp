@@ -8,7 +8,7 @@
 #include <cppad/ipopt/solve.hpp>
 #include "csv.h"
 
-#define n_times 10000 // number of time steps
+#define n_times 100000 // number of time steps
 #define n_options 15  // number of products
 #define n_types 10	// number of customer types
 
@@ -484,9 +484,9 @@ double real_LL(int **mu_matrix)
 int main()
 {
 	// load data and preprocessing
-	int **sigma_matrix = import_prefs("../data/simulated_data/l0.8/10000/1/types.csv");
-	int **avail_matrix = import_availability("../data/simulated_data/l0.8/10000/1/avail.csv");
-	int *trans_vec = import_transactions("../data/simulated_data/l0.8/10000/1/trans.csv");
+	int **sigma_matrix = import_prefs("../data/simulated_data/l0.8/100000/1/types.csv");
+	int **avail_matrix = import_availability("../data/simulated_data/l0.8/100000/1/avail.csv");
+	int *trans_vec = import_transactions("../data/simulated_data/l0.8/100000/1/trans.csv");
 	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
 	// Data import debugging prints ##################################################
 	{
@@ -526,7 +526,7 @@ int main()
 
 		// find max difference of solution, exit loop if small enough
 		maxdiff = *std::max_element(x_diff_vec, x_diff_vec + n_types);
-		if (maxdiff < 1e-4)
+		if (maxdiff < 1e-3)
 		{
 			done = 1;
 		}
