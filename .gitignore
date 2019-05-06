@@ -1,3 +1,6 @@
+# cache
+*.ipch
+
 # Data
 *.csv
 
