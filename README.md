@@ -21,7 +21,7 @@
   - One version will have all bookings at beginning of day, other will have all bookings at end of day
 - Create customer types, where each type is a list of possible product choices, including stay dates and room types. Orderings to be decided later
 
-*Sprint 1 goals:*
+*Sprint 1 goals:*  
 Input data:
 - Availability table: each row is possible book date, each col is (roomtype, stay date) tuple
 - Transaction vector: all bookings at beginning of day, each cell is date range and room type
