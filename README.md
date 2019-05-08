@@ -21,7 +21,7 @@
   - One version will have all bookings at beginning of day, other will have all bookings at end of day
 - Create customer types, where each type is a list of possible product choices, including stay dates and room types. Orderings to be decided later
 
-**Sprint 1 goals:**
+**Step 3 sprint 1 goals:**
 - Input data:
   - Preprocess original transaction data. **DONE**
   - Build transaction vector: all bookings at beginning of day, each cell is date range and room type. **DONE**
