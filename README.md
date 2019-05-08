@@ -16,12 +16,20 @@
 
 #### Step 3: Extend van Ryzin & Vulcano to include seasonality and be fast enough to work on hotel problems where the assortment size is gigantic.
 **Subtasks:**
-- Create availability table for Cabot data, where each row is either a booking/cancellation, and each col is a possible stay date/room type combination
+- Create availability table for Cabot data, where each row is either a booking/cancellation, and each col is a possible stay date/room type combination, cell value is number of rooms available
 - Create transaction vector, where each row is a subperiod of day (periods/day = max bookings in 1 day):
-  - One version will have all bookings at beginning of day, other will have all bookings at end of day **done for pre, do post later**  
-  - Each cell is a date range/room type pair, can simplify later
-- Create customer types:
-  - For now, each customer type only depends on room type (add time features later)
+  - One version will have all bookings at beginning of day, other will have all bookings at end of day
+- Create customer types, where each type is a list of possible product choices, including stay dates and room types. Orderings to be decided later
+
+*Sprint 1 goals:*  
+Input data:
+- Availability table: each row is possible book date, each col is (roomtype, stay date) tuple
+- Transaction vector: all bookings at beginning of day, each cell is date range and room type
+- Customer types: Room type dependent only, constains 2, 3, and 4 tuples, cheap to expensive and expensive to cheap, grouped by similarity
+Model:
+- Add lasso regulatization to ipopt code
+
+
   
 ### Other notes:
 - Review R GLM for poission regression, what kind of link functions are reasonable?
@@ -58,5 +66,5 @@ Berkeley. Retrieved from http://melodi.ee.washington.edu/people/bilmes/mypapers/
 **Tools:**  
 IPOPT: Fast open source non-linear programming solver. https://projects.coin-or.org/Ipopt, https://github.com/coin-or/Ipopt  
 
-CPPAD: Fast open source package for computing derivatives. Needed since otherwise I'd have to code up gradients and hessians and whatnot D: to feed into IPOPT. https://coin-or.github.io/CppAD/doc/cppad.htm, https://github.com/coin-or/CppAD
+CPPAD: Fast open source package for computing derivatives. https://coin-or.github.io/CppAD/doc/cppad.htm, https://github.com/coin-or/CppAD
 
