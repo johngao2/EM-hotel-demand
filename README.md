@@ -23,14 +23,14 @@
 
 **Sprint 1 goals:**
 - Input data:
-  - Preprocess originial transaction data **done**
-  - Build transaction vector: all bookings at beginning of day, each cell is date range and room type **done**
-    - simplify by only including room type info in each cell
-  - Build availability table: each row is possible book date, each col is (roomtype, stay date) tuple
-    - simplify by making each col only roomtype
-  - Customer types: Room type dependent only, constains 2, 3, and 4 tuples, cheap to expensive and expensive to cheap, grouped by similarity  
+  - Preprocess original transaction data. **DONE**
+  - Build transaction vector: all bookings at beginning of day, each cell is date range and room type. **DONE**
+    - simplify by only including room type info in each cell.
+  - Build availability table: each row is possible book date, each col is (roomtype, stay date) tuple.
+    - simplify by making each col only roomtype.
+  - Customer types: Room type dependent only, constains 2, 3, and 4 tuples, cheap to expensive and expensive to cheap, grouped by similarity.
 - Model:
-  - Add lasso regularization to ipopt code
+  - Add lasso regularization to ipopt code.
   
 ### Other notes:
 - Review R GLM for poission regression, what kind of link functions are reasonable?
