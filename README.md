@@ -21,15 +21,16 @@
   - One version will have all bookings at beginning of day, other will have all bookings at end of day
 - Create customer types, where each type is a list of possible product choices, including stay dates and room types. Orderings to be decided later
 
-*Sprint 1 goals:*  
-Input data:
-- Availability table: each row is possible book date, each col is (roomtype, stay date) tuple
-- Transaction vector: all bookings at beginning of day, each cell is date range and room type
-- Customer types: Room type dependent only, constains 2, 3, and 4 tuples, cheap to expensive and expensive to cheap, grouped by similarity
-Model:
-- Add lasso regulatization to ipopt code
-
-
+**Sprint 1 goals:**
+- Input data:
+  - Preprocess originial transaction data **done**
+  - Build transaction vector: all bookings at beginning of day, each cell is date range and room type **done**
+    - simplify by only including room type info in each cell
+  - Build availability table: each row is possible book date, each col is (roomtype, stay date) tuple
+    - simplify by making each col only roomtype
+  - Customer types: Room type dependent only, constains 2, 3, and 4 tuples, cheap to expensive and expensive to cheap, grouped by similarity  
+- Model:
+  - Add lasso regularization to ipopt code
   
 ### Other notes:
 - Review R GLM for poission regression, what kind of link functions are reasonable?
