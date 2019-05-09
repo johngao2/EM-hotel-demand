@@ -29,6 +29,10 @@
   - Customer types: Room type dependent only, constains 2, 3, and 4 tuples, cheap to expensive and expensive to cheap, grouped by similarity.
 - Model:
   - Add lasso regularization to ipopt code.
+- Assumptions:
+  - No longer looking at arrival and depart dates, but just arrival (can be tightened to weekends only later)
+    - This means both trans and avail datasets will focus on arrival time
+    - Of course this still makes the data super sparse, so bad performance is expected in this sprit
   
 ### Other notes:
 - Review R GLM for poission regression, what kind of link functions are reasonable?
