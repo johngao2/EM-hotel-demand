@@ -17,15 +17,14 @@
 #### Step 3: Extend van Ryzin & Vulcano to include seasonality and be fast enough to work on hotel problems where the assortment size is gigantic.
 **Subtasks:**
 - Create availability table for Cabot data, where each row is a (book date, arrive date) tuple representing either a booking/cancellation, and each col is a room type, cell value is number of rooms available
-- Create transaction vector, where each row is a (subperiod of day (periods/day = max bookings in 1 day), arrive date) tuple:
+- Create transaction vector, where each row is a (subperiod of day (periods/day = max bookings in 1 day), arrive date, intraday period) tuple:
   - One version will have all bookings at beginning of day, other will have all bookings at end of day
 - Create customer types, where each type is a list of possible product choices, including stay dates and room types. Orderings to be decided later
 
 **Step 3 sprint 1 goals:**
 - Input data:
   - Preprocess original transaction data. **DONE**
-  - Build transaction vector: all bookings at beginning of day, each cell is date range and room type.
-    - simplify by only including room type info in each cell.
+  - Build transaction vector: all bookings at beginning of day, each row is a (subperiod of day (periods/day = max bookings in 1 day), arrive date, intraday period) tuple, each cell is a room type.
   - Build availability table: each row is possible (book date, arrive date) tuple, each col is roomtype.
   - Customer types: Room type dependent only, constains 2, 3, and 4 tuples, cheap to expensive and expensive to cheap, grouped by similarity.
 - Model:
