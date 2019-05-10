@@ -22,11 +22,11 @@
   - Preprocess original transaction data. **DONE**
   - Build transaction vector: all bookings at beginning of day, each row is a (subperiod of day (periods/day = max bookings in 1 day), arrive date, intraday period) tuple, each cell is a room type. **DONE**
     - make sure to collapse groups **DONE**
-  - Build availability table: each row is possible (book date, arrive date) tuple, each col is roomtype.
-    - don't collapse groups, but add/subtract capacity based on partial fillings
-    - assume an order placed on a certain day affects the capacity for all of that day's intraday periods
-    - need to match num of rows with trans vec
-  - Customer types: Room type dependent only, constains 2, 3, and 4 tuples, cheap to expensive and expensive to cheap, grouped by similarity.
+  - Build availability table: each row is possible (book date, arrive date) tuple, each col is roomtype. **DONE**
+    - don't collapse groups, but add/subtract capacity based on partial fillings **DONE**
+    - assume an order placed on a certain day affects the capacity for all of that day's intraday periods **DONE**
+    - need to confirm that it matches num of rows with trans vec **DONE**
+  - Customer types: Room type dependent only, constains 2, 3, and 4 tuples, cheap to expensive and expensive to cheap,  grouped by similarity. **DONE**
 - Model:
   - Add lasso regularization to ipopt code.
 - Assumptions:
