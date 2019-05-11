@@ -35,6 +35,12 @@
     - Of course this still makes the data super sparse, so bad performance is expected in this sprit
   - Availability assessed partially, e.g. if 1 person in a 4 person room cancels then add 1/4 to capacity
   - Assume all rooms are available at start of year (e.g. nobody booked 2 years in advance)
+- Going forward:
+  - Group arrive dates into weekly? If so, how to deal with availability, since it'll be biased down?
+  - Is there a better way to deal with intraday stuff?
+  - How will sparsity affect performance?
+  - How will abundant availability affect performance?
+  - Evaluation metric? (VR uses AIC and RMSE)
   
 ### Other notes:
 - Review R GLM for poission regression, what kind of link functions are reasonable?
