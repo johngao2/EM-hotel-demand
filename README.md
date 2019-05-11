@@ -39,6 +39,7 @@
   - Group arrive dates into weekly? If so, how to deal with availability, since it'll be biased down?
   - Is there a better way to deal with intraday stuff?
   - How will sparsity affect performance?
+  - Evaluation metric
   
 ### Other notes:
 - Review R GLM for poission regression, what kind of link functions are reasonable?
