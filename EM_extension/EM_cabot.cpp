@@ -65,10 +65,9 @@ void printVector(const char *text, T mat, std::size_t N, int width, int precisio
 int **import_prefs(const char *pref_filename)
 {
 	// import original preference matrix from data
-	io::CSVReader<17> in(pref_filename);
-	in.read_header(io::ignore_no_column, "cust_type", "rank1", "rank2", "rank3",
-				   "rank4", "rank5", "rank6", "rank7", "rank8", "rank9", "rank10",
-				   "rank11", "rank12", "rank13", "rank14", "rank15", "rank16");
+	io::CSVReader<9> in(pref_filename);
+	in.read_header(io::ignore_no_column, "cust_type", "rank_1", "rank_2", "rank_3",
+				   "rank_4", "rank_5", "rank_6", "rank_7", "rank_8");
 	int cust_type;
 	int pref_rank[n_options + 1];
 	int row_counter = 0;
@@ -76,9 +75,7 @@ int **import_prefs(const char *pref_filename)
 	pref_matrix = new int *[n_types];
 	while (in.read_row(cust_type, pref_rank[0], pref_rank[1], pref_rank[2],
 					   pref_rank[3], pref_rank[4], pref_rank[5], pref_rank[6],
-					   pref_rank[7], pref_rank[8], pref_rank[9], pref_rank[10],
-					   pref_rank[11], pref_rank[12], pref_rank[13], pref_rank[14],
-					   pref_rank[15]))
+					   pref_rank[7]))
 	{
 		pref_matrix[row_counter] = new int[n_options + 1];
 		for (int i = 0; i < n_options + 1; i++)
@@ -138,18 +135,16 @@ int **import_prefs(const char *pref_filename)
 // returns avail_matrix: a n_times x n_options matrix
 int **import_availability(const char *avail_filename)
 {
-	io::CSVReader<16> in(avail_filename);
-	in.read_header(io::ignore_no_column, "T", "prod1", "prod2", "prod3",
-				   "prod4", "prod5", "prod6", "prod7", "prod8", "prod9",
-				   "prod10", "prod11", "prod12", "prod13", "prod14", "prod15");
+	io::CSVReader<8> in(avail_filename);
+	in.read_header(io::ignore_no_column, "T", "prod_1", "prod_2", "prod_3",
+				   "prod_4", "prod_5", "prod_6", "prod_7");
 	int t;
 	int prod[n_options];
 	int row_counter = 0;
 	int **avail_matrix = 0;
 	avail_matrix = new int *[n_times];
 	while (in.read_row(t, prod[0], prod[1], prod[2], prod[3], prod[4],
-					   prod[5], prod[6], prod[7], prod[8], prod[9],
-					   prod[10], prod[11], prod[12], prod[13], prod[14]))
+					   prod[5], prod[6]))
 	{
 		avail_matrix[row_counter] = new int[n_options];
 		for (int i = 0; i < n_options; i++)
@@ -166,7 +161,7 @@ int **import_availability(const char *avail_filename)
 int *import_transactions(const char *trans_filename)
 {
 	io::CSVReader<2> in(trans_filename);
-	in.read_header(io::ignore_no_column, "T", "prod_num");
+	in.read_header(io::ignore_no_column, "T", "UNIT");
 	int t;
 	int prod_num;
 	int row_counter = 0;
@@ -392,8 +387,9 @@ void m_step()
 	// options
 	std::string options;
 	// turn off any printing
-	options += "Integer print_level  0\n";
-	options += "String  sb           yes\n";
+	// options += "Integer print_level  0\n";
+	// options += "String  sb           yes\n";
+	// scaling
 	options += "Numeric obj_scaling_factor   -1\n";
 	// maximum number of iterations
 	options += "Integer max_iter     200\n";
