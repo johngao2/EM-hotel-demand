@@ -1,3 +1,4 @@
+**Read info.pdf for a description of the project**
 ## Project Log:
 #### Step 1: Implement simple multinomial logit go get familiar with likelihood maximization using CppAD and IPOPT packages. *(MNL_baseline > simple_mnl.cpp)*  **DONE**  
 **Subtasks:**
