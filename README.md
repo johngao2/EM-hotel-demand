@@ -34,24 +34,26 @@
 - Data processing:
 - Model:
   
-### Other notes:
-Sprint 1 Q&A:
+## Other notes:
+**Sprint 1 Q&A:**
 - Group arrive dates into weekly? If so, how to deal with availability, since it'll be biased down?
 - Is there a better way to deal with intraday stuff?
   - scale num periods by lambda for sparse dates
 - How will sparsity affect performance?
-  - want hessians to have few zero values
+  - want hessians to have few nonzero values
 - How will abundant availability affect performance?
   - assume from the first day a value goes negative a room became available
 - Evaluation metric? (VR uses AIC and RMSE)
   - this is fine
-Sprint 1 Assumptions:
+ 
+**Sprint 1 Assumptions:**
 - No longer looking at arrival and depart dates, but just arrival (can be tightened to weekends only, later)
   - This means both trans and avail datasets will focus on arrival time
   - Of course this still makes the data super sparse, so bad performance is expected in this sprit
 - Availability assessed partially, e.g. if 1 person in a 4 person room cancels then add 1/4 to capacity
 - Assume all rooms are available at start of year (e.g. nobody booked 2 years in advance)
 
+**misc**
 - Review R GLM for poission regression, what kind of link functions are reasonable?
   - Think of variables we need to feed into GLM to model seasonality (only need to worry about time related stuff; one seasonality for booking, one for arrival)
 - Lambda will depend on when arrival occurs and booking
