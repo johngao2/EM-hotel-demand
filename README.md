@@ -28,7 +28,7 @@
     - assume an order placed on a certain day affects the capacity for all of that day's intraday periods **DONE**
     - need to confirm that it matches num of rows with trans vec **DONE**
   - Customer types: Room type dependent only, constains 2, 3, and 4 tuples, cheap to expensive and expensive to cheap,  grouped by similarity. **DONE**
-- **Log likelihood at end of sprint: -54573.9** with stoppint criteria max change in x vector < 1e-3
+- **Log likelihood at end of sprint: -54573.9** with stopping criteria max change in x vector < 1e-3
  
   
 **Step 3 sprint 1 goals:**
