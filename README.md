@@ -31,10 +31,9 @@
 - **Log likelihood at end of sprint: -54573.9** with stopping criteria max change in x vector < 1e-3
  
   
-**Step 3 sprint 1 goals:**
+**Step 3 sprint 2 goals:**
 - Data processing:
-  - Group arrivals into weeks
-    - Gotta deal with availability downwards bias somehow
+  - Remove arrivals and add 4 pricing periods as product modifiers?
   - For avail: assume the first time a room goes negative 1 that the room capacity is increased by 1 (to account for rm 199 and rm 200)
   - Investigate lambda scaling for nonbusy dates, see if it helps
 - Model:
