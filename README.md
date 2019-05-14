@@ -34,6 +34,7 @@
 **Step 3 sprint 2 goals:**
 - Data processing:
   - Remove arrivals and add 4 pricing periods as product modifiers?
+    - must be consec
   - For avail: assume the first time a room goes negative 1 that the room capacity is increased by 1 (to account for rm 199 and rm 200)
   - Investigate lambda scaling for nonbusy dates, see if it helps
 - Model:
