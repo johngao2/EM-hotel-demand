@@ -28,12 +28,18 @@
     - assume an order placed on a certain day affects the capacity for all of that day's intraday periods **DONE**
     - need to confirm that it matches num of rows with trans vec **DONE**
   - Customer types: Room type dependent only, constains 2, 3, and 4 tuples, cheap to expensive and expensive to cheap,  grouped by similarity. **DONE**
+- **Log likelihood at end of sprint: -54573.9** with stopping criteria max change in x vector < 1e-3
+ 
+  
+**Step 3 sprint 2 goals:**
+- Data processing:
+  - Remove arrivals and add 4 pricing periods as product modifiers?
+    - must be consec
+  - For avail: assume the first time a room goes negative 1 that the room capacity is increased by 1 (to account for rm 199 and rm 200)
+  - Investigate lambda scaling for nonbusy dates, see if it helps
 - Model:
   - Add lasso regularization to ipopt code.
-  
-**Step 3 sprint 1 goals:**
-- Data processing:
-- Model:
+  - Code up VR AIC and RMSE metrics for testing
   
 ## Other notes:
 **Sprint 1 Q&A:**
@@ -58,7 +64,7 @@
 - Review R GLM for poission regression, what kind of link functions are reasonable?
   - Think of variables we need to feed into GLM to model seasonality (only need to worry about time related stuff; one seasonality for booking, one for arrival)
 - Lambda will depend on when arrival occurs and booking
-- Try lasso penalty in ipopt
+- Try lasso penalty in ipopt 
   - min f(x) + alpha(sum(y)) where -y_i <= x_i <= y_i, use this since solvers HATE abs
 - booking:
   - for now, constant lambda during 2 week period with weekly seasonality pattern
