@@ -39,7 +39,7 @@
   - Investigate lambda scaling for nonbusy dates, see if it helps
 - Model:
   - Add lasso regularization to ipopt code.
-  - Code up VR AIC and RMSE metrics for testing
+  - Code up VR AIC and RMSE metrics for testing **DONE AIC**
   
 ## Other notes:
 **Sprint 1 Q&A:**
@@ -50,7 +50,7 @@
   - want hessians to have few nonzero values
 - How will abundant availability affect performance?
   - assume from the first day a value goes negative a room became available
-- Evaluation metric? (VR uses AIC and RMSE)
+- Evaluation metric? (VR uses AIC and RMSE) 
   - this is fine
  
 **Sprint 1 Assumptions:**
