@@ -28,7 +28,7 @@
     - assume an order placed on a certain day affects the capacity for all of that day's intraday periods **DONE**
     - need to confirm that it matches num of rows with trans vec **DONE**
   - Customer types: Room type dependent only, constains 2, 3, and 4 tuples, cheap to expensive and expensive to cheap,  grouped by similarity. **DONE**
-- **Log likelihood at end of sprint: -54573.9** with stopping criteria max change in x vector < 1e-3
+- **Sprint 1 AIC: 109163** with stopping criteria max change in x vector < 1e-3
  
   
 **Step 3 sprint 2 goals:**
@@ -39,7 +39,7 @@
   - Investigate lambda scaling for nonbusy dates, see if it helps
 - Model:
   - Add lasso regularization to ipopt code.
-  - Code up VR AIC and RMSE metrics for testing
+  - Code up VR AIC and RMSE metrics for testing **DONE AIC**
   
 ## Other notes:
 **Sprint 1 Q&A:**
@@ -50,7 +50,7 @@
   - want hessians to have few nonzero values
 - How will abundant availability affect performance?
   - assume from the first day a value goes negative a room became available
-- Evaluation metric? (VR uses AIC and RMSE)
+- Evaluation metric? (VR uses AIC and RMSE) 
   - this is fine
  
 **Sprint 1 Assumptions:**
