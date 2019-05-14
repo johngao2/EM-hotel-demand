@@ -9,16 +9,17 @@
 #include "csv.h"
 
 #define n_times 3558100 // number of time steps
-#define n_options 7  // number of products
-#define n_types 8	// number of customer types
+#define n_options 7		// number of products
+#define n_types 8		// number of customer types
 
 // GLOBAL VARS
-double m_vec[n_types];		   // m_vector, counts number of occurences of a type n arrival
-double current_x_vec[n_times]; // current solution vector
-double x_diff_vec[n_times];	// tracks changes in solution
-double a_vec[n_times];		   // a_vector, tracks if there was an arrival in a period
-double lambda;				   // arrival parameter
-int n_purch;				   // tracks number total number of purchases
+double m_vec[n_types];		   	// m_vector, counts number of occurences of a type n arrival
+double current_x_vec[n_times]; 	// current solution vector
+double x_diff_vec[n_times];		// tracks changes in solution
+double a_vec[n_times];		   	// a_vector, tracks if there was an arrival in a period
+double lambda;				   	// arrival parameter
+double current_obj;				// stores objective
+int n_purch;				   	// tracks number total number of purchases
 
 namespace
 {
@@ -426,6 +427,7 @@ void m_step()
 	}
 	lambda = solution.x[n_types];
 
+	current_obj = solution.obj_value;
 	std::cout << "CURRENT OBJECTIVE VALUE: " << solution.obj_value << std::endl;
 	// std::cout << "CURR LAMBDA: " << solution.x[n_types] << std::endl;
 
@@ -530,6 +532,21 @@ int main()
 	}
 	printVector("FINAL X_VEC", current_x_vec, n_types, 5, 5);
 	std::cout << "FINAL LAMBDA: " << lambda << std::endl;
+
+	std::ofstream output;
+	output.open("sprint1_results.csv");
+	output << "var,value\n";
+	for (int i = 0; i < n_types; i++)
+	{
+		 output << 'x';
+		 output << i+1;
+		 output << ',';
+		 output << current_x_vec[i];
+		 output << '\n';
+	}
+	output << "lambda," << lambda << '\n';
+	output << "LL," << current_obj << '\n';
+
 	std::cout << "TEST DONE" << std::endl;
 	return 1;
 }
