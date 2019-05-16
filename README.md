@@ -29,15 +29,13 @@
     - need to confirm that it matches num of rows with trans vec **DONE**
   - Customer types: Room type dependent only, constains 2, 3, and 4 tuples, cheap to expensive and expensive to cheap,  grouped by similarity. **DONE**
 - **Sprint 1 AIC: 109163** with stopping criteria max change in x vector < 1e-3
- 
-  
+
 **Step 3 sprint 2 goals:**
 - Data processing:
-  - Remove arrivals and add 4 pricing periods as product modifiers?
-    - must be consec
-    - don't remake arrivals lol takes too long
+  - remake each product into 3 tuple (unit, week, price) for prod and avail
+  - each cust type must choose b/w consecutive weekends
   - For avail: assume the first time a room goes negative 1 that the room capacity is increased by 1 (to account for rm 199 and rm 200)
-    - need to deal with wierd small decimals somehow
+    - need to deal with weird small decimals somehow
   - Investigate lambda scaling for nonbusy dates, see if it helps
 - Model:
   - Add lasso regularization to ipopt code.
