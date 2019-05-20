@@ -36,6 +36,7 @@
   - cust types:
     - stay length, day of week arrival are independent
     - customer chooses b/w UNIT, 2 consecutive weeks. Price is included in weeks already, dont worry about it.
+    - when collapsing the multiindexed cols into numbers, that's used as the product number for trans vec
   - arrival:
     - each col is a (unit, week, day of week, stay_len) tuple, rows can be reduced to just look dates
   - trans:
