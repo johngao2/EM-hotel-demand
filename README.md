@@ -33,6 +33,13 @@
 **Step 3 sprint 2 goals:**
 - Data processing:
   - remake each product into 3 tuple (unit, week, price) for prod and avail
+  - cust types:
+    - stay length, day of week arrival are independent
+    - customer chooses b/w UNIT, 2 consecutive weeks. Price is included in weeks already, dont worry about it.
+  - arrival:
+    - each col is a (unit, week) tuple, rows are as before
+  - trans:
+    - each product is a (unit, week) tuple, 
   - each cust type must choose b/w consecutive weekends
   - For avail: assume the first time a room goes negative 1 that the room capacity is increased by 1 (to account for rm 199 and rm 200)
     - need to deal with weird small decimals somehow
