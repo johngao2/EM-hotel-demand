@@ -39,6 +39,7 @@
   - arrival:
     - each col is a (unit, week, day of week, stay_len) tuple, rows can be reduced to just look dates
     - when collapsing the multiindexed cols into numbers, that's used as the product number for trans vec
+    - make sure to use fillna downfill to fill intraday avail
   - trans:
     - each product num represents a combination of (unit, week, day of week, stay len tuple)
     - can use mod arithmetic to access specific product numbers
