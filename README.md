@@ -37,7 +37,7 @@
     - stay length, day of week arrival are independent
     - customer chooses b/w UNIT, 2 consecutive weeks. Price is included in weeks already, dont worry about it.
   - arrival:
-    - each col is a (unit, week) tuple, rows are as before
+    - each col is a (unit, week, day of week, stay_len) tuple, rows can be reduced to just look dates
   - trans:
     - each product is a (unit, week) tuple, 
   - each cust type must choose b/w consecutive weekends
