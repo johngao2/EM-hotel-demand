@@ -9,8 +9,8 @@
 #include "csv.h"
 
 #define n_times 100000 // number of time steps
-#define n_options 15  // number of products
-#define n_types 10	// number of customer types
+#define n_options 15   // number of products
+#define n_types 10	 // number of customer types
 
 // GLOBAL VARS
 double m_vec[n_types];		   // m_vector, counts number of occurences of a type n arrival
@@ -18,6 +18,7 @@ double current_x_vec[n_times]; // current solution vector
 double x_diff_vec[n_times];	// tracks changes in solution
 double a_vec[n_times];		   // a_vector, tracks if there was an arrival in a period
 double lambda;				   // arrival parameter
+double alpha = 1;			   // regularization hyperparameter
 int n_purch;				   // tracks number total number of purchases
 
 namespace
@@ -319,12 +320,12 @@ void estimate_m_vec(double **p_sigma_matrix)
 // Problem formulated here
 class FG_eval
 {
-  public:
+public:
 	typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
 	void operator()(ADvector &fg, const ADvector &x)
 	{
-		assert(fg.size() == 2);
-		assert(x.size() == n_types + 1);
+		assert(fg.size() == 2 * n_types + 2); // 1 LL formula, 1 sum of x constraint, 2*n_types regularization constraints
+		assert(x.size() == 2 * n_types + 1);
 
 		// printVector("m_vec:", m_vec, n_types, 4, 5);
 
@@ -344,11 +345,29 @@ class FG_eval
 				sum_ambiguous_a += a_vec[t];
 			}
 		}
-		fg[0] += (n_purch + sum_ambiguous_a) * log(x[n_types]) + ((n_times - n_purch) - sum_ambiguous_a) * log(1 - x[n_types]);
+
+		AD<double> reg_sum = 0;
+		// sum regularization terms
+		for (int i = 0; i < n_types; i++)
+		{
+			reg_sum += x[n_types + 1 + i];
+		}
+		reg_sum = reg_sum * alpha;
+
+		// main function to optimize
+		fg[0] += (n_purch + sum_ambiguous_a) * log(x[n_types]) + ((n_times - n_purch) - sum_ambiguous_a) * log(1 - x[n_types]) - reg_sum;
+
 		// constraint that sum of x's = 1
 		for (int i = 0; i < n_types; i++)
 		{
 			fg[1] += x[i];
+		}
+
+		// reg constraints
+		for (int i = 0; i < n_types; i++)
+		{
+			fg[2 + i] = x[n_types + 1 + i] - x[i];
+			fg[2 + n_types + i] = -x[n_types + 1 + i] - x[i];
 		}
 
 		return;
@@ -364,16 +383,20 @@ void m_step()
 	size_t i;
 	typedef CPPAD_TESTVECTOR(double) Dvector;
 
-	// number of independent variables n_types + 1 extra for lambda
-	size_t nx = n_types + 1;
+	// number of independent variables n_types + 1 extra for lambda + regularizers vars
+	size_t nx = 2 * n_types + 1;
 	// number of constraints (range dimension for g)
-	size_t ng = 1;
+	size_t ng = 2 * n_types + 1;
 	// initial value of the independent variables
+
 	Dvector xi(nx);
-	for (i = 0; i < n_types + 1; i++)
+	for (i = 0; i < n_types; i++)
 	{
 		xi[i] = 0.1;
+		xi[n_types + 1 + i] = 0.1;
 	}
+	xi[n_types] = 0; // initial lambda
+
 	// lower and upper limits for x
 	Dvector xl(nx), xu(nx);
 	for (i = 0; i < nx; i++)
@@ -381,10 +404,14 @@ void m_step()
 		xl[i] = 0;
 		xu[i] = 1;
 	}
+
 	// lower and upper limits for g
 	Dvector gl(ng), gu(ng);
-	gl[0] = 0;
-	gu[0] = 1;
+	for (i = 0; i < 2 * n_types + 1; i++)
+	{
+		gl[i] = 0;
+		gu[i] = 1;
+	}
 
 	// object that computes objective and constraints
 	FG_eval fg_eval;
@@ -392,8 +419,9 @@ void m_step()
 	// options
 	std::string options;
 	// turn off any printing
-	options += "Integer print_level  0\n";
-	options += "String  sb           yes\n";
+	//options += "Integer print_level  0\n";
+	//options += "String  sb           yes\n";
+	// scaling to maximize instead of minimize
 	options += "Numeric obj_scaling_factor   -1\n";
 	// maximum number of iterations
 	options += "Integer max_iter     200\n";
