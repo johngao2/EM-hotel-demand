@@ -32,12 +32,11 @@
 
 **Step 3 sprint 2 goals:**
 - Data processing:
-  - remake each product into 3 tuple (unit, week, price) for prod and avail
   - cust types:
     - stay length, day of week arrival are independent
     - customer chooses b/w UNIT, 2 consecutive weeks. Price is included in weeks already, dont worry about it.
   - arrival:
-    - each col is a (unit, week, day of week, stay_len) tuple, rows can be reduced to just look dates
+    - each col is a (unit, week, day of week, stay_len) tuple, rows can be reduced to just look dates **DONE**
     - when collapsing the multiindexed cols into numbers, that's used as the product number for trans vec
     - make sure to use fillna downfill to fill intraday avail
     - avail fill example:
