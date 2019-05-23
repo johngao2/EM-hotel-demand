@@ -37,11 +37,7 @@
     - customer chooses b/w UNIT, 2 consecutive weeks. Price is included in weeks already, dont worry about it.
   - arrival:
     - each col is a (unit, week, day of week, stay_len) tuple, rows can be reduced to just look dates **DONE**
-    - when collapsing the multiindexed cols into numbers, that's used as the product number for trans vec
-    - make sure to use fillna downfill to fill intraday avail
-    - avail fill example:
-      - e.g. 4 day stay on monday of week 1
-      - subtract 1/grp_size for all stay lengths of monday, subtract from stay lengths 1,2,3 on tuesday, lengths 1,2 on wednesday, length 1 on friday
+    - when collapsing the multiindexed cols into numbers, that's used as the product number for trans vec **DONE**
   - trans:
     - each product num represents a combination of (unit, week, day of week, stay len tuple)
     - can use mod arithmetic to access specific product numbers
