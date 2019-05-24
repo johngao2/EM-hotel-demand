@@ -32,17 +32,17 @@
 **Step 3 sprint 2 goals:**
 - Data processing:
   - cust types:
-    - stay length, day of week arrival are independent
+    - stay length, day of week arrival are independent, stay length is reduced to 4 values, with 4 being stay for 4 days or more
     - customer chooses b/w UNIT, 2 consecutive weeks. Price is included in weeks already, dont worry about it.
   - arrival:
-    - each col is a (unit, week, day of week, stay_len) tuple, rows can be reduced to just look dates **DONE**
+    - each col is a (unit, week, day of week, stay_len) tuple, rows can be reduced to just look dates **DONE,**
     - when collapsing the multiindexed cols into numbers, that's used as the product number for trans vec **DONE**
     - assume the first time a room goes negative 1 that the room capacity is increased by 1 (to account for rm 199 and rm 200)
   - trans:
     - each product num represents a combination of (unit, week, day of week, stay len tuple)
   - Investigate lambda scaling for nonbusy dates, see if it helps
 - Model:
-  - Add lasso regularization to ipopt code.
+  - Add lasso regularization to ipopt code. **DONE**
   - Code up VR AIC and RMSE metrics for testing **DONE AIC**
   
 ## Other notes:
