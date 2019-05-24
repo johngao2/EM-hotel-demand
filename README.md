@@ -16,7 +16,6 @@
   - Implement censored algo on my own simulated data **DONE, SEEMS TO RECOVER PARAMS WELL**
 
 #### Step 3: Extend van Ryzin & Vulcano to include seasonality and be fast enough to work on hotel problems where the assortment size is gigantic.
-**Subtasks:**
 
 **Step 3 sprint 1 goals:**
 - Data processing:
@@ -38,12 +37,9 @@
   - arrival:
     - each col is a (unit, week, day of week, stay_len) tuple, rows can be reduced to just look dates **DONE**
     - when collapsing the multiindexed cols into numbers, that's used as the product number for trans vec **DONE**
+    - assume the first time a room goes negative 1 that the room capacity is increased by 1 (to account for rm 199 and rm 200)
   - trans:
     - each product num represents a combination of (unit, week, day of week, stay len tuple)
-    - can use mod arithmetic to access specific product numbers
-  - each cust type must choose b/w consecutive weekends
-  - For avail: assume the first time a room goes negative 1 that the room capacity is increased by 1 (to account for rm 199 and rm 200)
-    - need to deal with weird small decimals somehow
   - Investigate lambda scaling for nonbusy dates, see if it helps
 - Model:
   - Add lasso regularization to ipopt code.

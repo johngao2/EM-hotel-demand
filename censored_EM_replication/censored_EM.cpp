@@ -367,7 +367,7 @@ public:
 		for (int i = 0; i < n_types; i++)
 		{
 			fg[2 + i] = x[n_types + 1 + i] - x[i];
-			fg[2 + n_types + i] = -x[n_types + 1 + i] - x[i];
+			fg[2 + n_types + i] = x[i] - x[n_types + 1 + i];
 		}
 
 		return;
