@@ -32,8 +32,8 @@
 **Step 3 sprint 2 goals:**
 - Data processing:
   - cust types:
-    - stay length, day of week arrival are independent, stay length is reduced to 4 values, with 4 being stay for 4 days or more
-    - customer chooses b/w UNIT, 2 consecutive weeks. Also, they choose between prioritizing week vs prioritizing unit. Price is included in weeks already, dont worry about it.
+    - stay length, day of week arrival are independent, stay length is reduced to 4 values, with 4 being stay for 4 days or more **DONE**
+    - customer chooses b/w UNIT, 2 consecutive weeks. Also, they choose between prioritizing week vs prioritizing unit. Price is included in weeks already, dont worry about it. **DONE**
   - arrival:
     - each col is a (unit, week, day of week, stay_len) tuple, rows can be reduced to just look dates **DONE,**
     - when collapsing the multiindexed cols into numbers, that's used as the product number for trans vec **DONE**
@@ -65,11 +65,13 @@
 - Assume all rooms are available at start of year (e.g. nobody booked 2 years in advance)
 
 **misc**
+- cornell tech, nyu, colombia, berkeley, marshall, wharton, 
+- valgrind to debug memory leak
 - Review R GLM for poission regression, what kind of link functions are reasonable?
   - Think of variables we need to feed into GLM to model seasonality (only need to worry about time related stuff; one seasonality for booking, one for arrival)
 - Lambda will depend on when arrival occurs and booking
-- Try lasso penalty in ipopt 
-  - min f(x) + alpha(sum(y)) where -y_i <= x_i <= y_i, use this since solvers HATE abs
+- Try r2 penalty in ipopt 
+  - possible closed form in the future
 - booking:
   - for now, constant lambda during 2 week period with weekly seasonality pattern
   - use multiplicative to preserve signs
