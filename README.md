@@ -33,13 +33,13 @@
 - Data processing:
   - cust types:
     - stay length, day of week arrival are independent, stay length is reduced to 4 values, with 4 being stay for 4 days or more
-    - customer chooses b/w UNIT, 2 consecutive weeks. Price is included in weeks already, dont worry about it.
+    - customer chooses b/w UNIT, 2 consecutive weeks. Also, they choose between prioritizing week vs prioritizing unit. Price is included in weeks already, dont worry about it.
   - arrival:
     - each col is a (unit, week, day of week, stay_len) tuple, rows can be reduced to just look dates **DONE,**
     - when collapsing the multiindexed cols into numbers, that's used as the product number for trans vec **DONE**
-    - assume the first time a room goes negative 1 that the room capacity is increased by 1 (to account for rm 199 and rm 200)
+    - assume the first time a room goes negative 1 that the room capacity is increased by 1 (to account for rm 199 and rm 200) **tabled for now**
   - trans:
-    - each product num represents a combination of (unit, week, day of week, stay len tuple)
+    - each product num represents a combination of (unit, week, day of week, stay len tuple) **DONE**
   - Investigate lambda scaling for nonbusy dates, see if it helps
 - Model:
   - Add lasso regularization to ipopt code. **DONE**
