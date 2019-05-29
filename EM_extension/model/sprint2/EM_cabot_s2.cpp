@@ -405,8 +405,8 @@ void m_step()
 	// options
 	std::string options;
 	// turn off any printing
-	//options += "Integer print_level  0\n";
-	//options += "String  sb           yes\n";
+	options += "Integer print_level  0\n";
+	options += "String  sb           yes\n";
 	// scaling to maximize instead of minimize
 	options += "Numeric obj_scaling_factor   -1\n";
 	// maximum number of iterations
@@ -540,7 +540,7 @@ int main()
 
 		// find max difference of solution, exit loop if small enough
 		maxdiff = *std::max_element(x_diff_vec, x_diff_vec + n_types);
-		if (maxdiff < 1e-3)
+		if (1)
 		{
 			done = 1;
 		}
