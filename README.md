@@ -47,7 +47,7 @@
 - Data Processing:
   - add 1 to room avail when it goes negative
 - Model:
-  - parse wide csv's
+  - parse wide csv's (boost spirit is probably a good call)
   - Add L2 reg **DONE**
   - Debug mem leak with valgrind
   
