@@ -8,8 +8,8 @@ INCS = 	-I/Users/johngao/work/thesis/CoinIpopt/build/include/coin/ThirdParty	\
 		-I/Users/johngao/work/thesis/CoinIpopt/build/include 					\
 		-I/Users/johngao/work/thesis/fast-cpp-csv-parser
 
-censored_EM.o: censored_EM.cpp
-	g++ -std=c++0x -c censored_EM.cpp ${INCS}
+EM_cabot_s2.o: EM_cabot_s2.cpp
+	g++ -std=c++0x -c EM_cabot_s2.cpp ${INCS}
 
-censored_EM: censored_EM.o
-	g++ -std=c++0x -o censored_EM censored_EM.o ${LIBS}
+EM_cabot_s2: EM_cabot_s2.o
+	g++ -std=c++0x -o EM_cabot_s2 EM_cabot_s2.o ${LIBS}

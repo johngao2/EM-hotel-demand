@@ -44,9 +44,12 @@
   - Code up VR AIC and RMSE metrics for testing **DONE AIC**
 
 **Step 3 sprint 3 goals:**
+- Data Processing:
+  - add 1 to room avail when it goes negative
 - Model:
-  - Add L2 reg
-  - 
+  - parse wide csv's
+  - Add L2 reg **DONE**
+  - Debug mem leak with valgrind
   
 ## Other notes:
 **Backlog:**
