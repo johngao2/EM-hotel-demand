@@ -37,26 +37,32 @@
   - arrival:
     - each col is a (unit, week, day of week, stay_len) tuple, rows can be reduced to just look dates **DONE,**
     - when collapsing the multiindexed cols into numbers, that's used as the product number for trans vec **DONE**
-    - assume the first time a room goes negative 1 that the room capacity is increased by 1 (to account for rm 199 and rm 200) **tabled for now**
   - trans:
     - each product num represents a combination of (unit, week, day of week, stay len tuple) **DONE**
-  - Investigate lambda scaling for nonbusy dates, see if it helps
 - Model:
   - Add lasso regularization to ipopt code. **DONE**
   - Code up VR AIC and RMSE metrics for testing **DONE AIC**
+
+**Step 3 sprint 3 goals:**
+- Model:
+  - Add L2 reg
+  - 
   
 ## Other notes:
-**Sprint 1 Q&A:**
-- Group arrive dates into weekly? If so, how to deal with availability, since it'll be biased down?
-- Is there a better way to deal with intraday stuff?
-  - scale num periods by lambda for sparse dates
-- How will sparsity affect performance?
-  - want hessians to have few nonzero values
-- How will abundant availability affect performance?
-  - assume from the first day a value goes negative a room became available
-- Evaluation metric? (VR uses AIC and RMSE) 
-  - this is fine
- 
+**Backlog:**
+- Scale num periods by lambda for sparse dates, might fix sparsity problem if implementable
+- Implement RMSE from Van Ryzin paper
+- add 1 to available rooms everytime avail goes into negatives (should only affect DD room type, of which 2 were added in 2018)
+- debug memory leak in model (see if valgrind helps)
+- find out how to parse csv files with many cols (manually might be only option)
+- try l2 regularization
+  - might be able to make obj closed form again
+- try putting intraday transactions at end of day
+
+**misc notes**
+- want hessians to have few nonzero values
+- lasso won't work due to log(x) in objective function
+
 **Sprint 1 Assumptions:**
 - No longer looking at arrival and depart dates, but just arrival (can be tightened to weekends only, later)
   - This means both trans and avail datasets will focus on arrival time
@@ -64,21 +70,21 @@
 - Availability assessed partially, e.g. if 1 person in a 4 person room cancels then add 1/4 to capacity
 - Assume all rooms are available at start of year (e.g. nobody booked 2 years in advance)
 
+**Sprint 2 Assumptions:**
+- Customers decide based on arrival day of week, stay length, unit type, week of arrival
+  - all 4 factors independent of each other
+  - dow and stay len are independent, unit type and week of arrival are ordered
+    - unit type orders are same as sprint 1, week orders are consecutive weeks with sooner preference and later preference types
+
 **misc**
-- cornell tech, nyu, colombia, berkeley, marshall, wharton, 
-- valgrind to debug memory leak
 - Review R GLM for poission regression, what kind of link functions are reasonable?
   - Think of variables we need to feed into GLM to model seasonality (only need to worry about time related stuff; one seasonality for booking, one for arrival)
 - Lambda will depend on when arrival occurs and booking
-- Try r2 penalty in ipopt 
-  - possible closed form in the future
 - booking:
   - for now, constant lambda during 2 week period with weekly seasonality pattern
   - use multiplicative to preserve signs
 - arrival:
   - Start with 2 weekend pair (which can shift) + something with a room types
-  - each customer type consists of a pair of weekends (e.g. one weekend vs weekend after)
-  - most important thing to consider is type; weekend pair used for tiebreakers
 - transactions:
   - try putting intraday transactions both at start and end of day
 
