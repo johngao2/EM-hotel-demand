@@ -1,4 +1,3 @@
-// EM implemented for Hotel 5 dataset
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -13,13 +12,13 @@
 #define n_types 8		// number of customer types
 
 // GLOBAL VARS
-double m_vec[n_types];		   	// m_vector, counts number of occurences of a type n arrival
-double current_x_vec[n_times]; 	// current solution vector
-double x_diff_vec[n_times];		// tracks changes in solution
-double a_vec[n_times];		   	// a_vector, tracks if there was an arrival in a period
-double lambda;				   	// arrival parameter
-double current_obj;				// stores objective
-int n_purch;				   	// tracks number total number of purchases
+double m_vec[n_types];		   // m_vector, counts number of occurences of a type n arrival
+double current_x_vec[n_times]; // current solution vector
+double x_diff_vec[n_times];	// tracks changes in solution
+double a_vec[n_times];		   // a_vector, tracks if there was an arrival in a period
+double lambda;				   // arrival parameter
+double current_obj;			   // stores objective
+int n_purch;				   // tracks number total number of purchases
 
 namespace
 {
@@ -315,7 +314,7 @@ void estimate_m_vec(double **p_sigma_matrix)
 // Problem formulated here
 class FG_eval
 {
-  public:
+public:
 	typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
 	void operator()(ADvector &fg, const ADvector &x)
 	{
@@ -387,9 +386,10 @@ void m_step()
 
 	// options
 	std::string options;
-	// turn off any printing
-	options += "Integer print_level  0\n";
-	options += "String  sb           yes\n";
+	// printing
+	options += "Integer print_level  6\n";
+	options += "String print_timing_statistics  yes\n";
+	// options += "String  sb           yes\n";
 	// scaling
 	options += "Numeric obj_scaling_factor   -1\n";
 	// maximum number of iterations
@@ -488,10 +488,10 @@ int main()
 	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
 	// Data import debugging prints ##################################################
 	{
-		printMatrix("PREFERENCE MATRIX:", sigma_matrix, 8, n_options + 1, 3);
-		printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, n_options, 3);
-		printVector("TRANSACTION VECTOR:", trans_vec, 10, 3);
-		printMatrix("MU MATRIX:", mu_matrix, 20, n_types, 3);
+		// printMatrix("PREFERENCE MATRIX:", sigma_matrix, 8, n_options + 1, 3);
+		// printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, n_options, 3);
+		// printVector("TRANSACTION VECTOR:", trans_vec, 10, 3);
+		// printMatrix("MU MATRIX:", mu_matrix, 20, n_types, 3);
 	}
 
 	// init: set a_vec to 0 x_vec to 1/N, lambda to 0.5, count purchases
@@ -524,10 +524,17 @@ int main()
 
 		// find max difference of solution, exit loop if small enough
 		maxdiff = *std::max_element(x_diff_vec, x_diff_vec + n_types);
-		if (1)
+		if (maxdiff < 1e-9)
 		{
 			done = 1;
 		}
+
+		for (int t = 0; t < n_times; t++)
+		{
+			delete[] p_sigma_matrix[t];
+		}
+
+        delete[] p_sigma_matrix;
 		// printVector("CURRENT SOLUTION", current_x_vec, n_types, 3, 5);
 	}
 	printVector("FINAL X_VEC", current_x_vec, n_types, 5, 5);
@@ -538,11 +545,11 @@ int main()
 	output << "var,value\n";
 	for (int i = 0; i < n_types; i++)
 	{
-		 output << 'x';
-		 output << i+1;
-		 output << ',';
-		 output << current_x_vec[i];
-		 output << '\n';
+		output << 'x';
+		output << i + 1;
+		output << ',';
+		output << current_x_vec[i];
+		output << '\n';
 	}
 	output << "lambda," << lambda << '\n';
 	output << "LL," << current_obj << '\n';

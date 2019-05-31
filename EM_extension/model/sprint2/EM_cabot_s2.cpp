@@ -1,10 +1,9 @@
-// EM implemented for Hotel 5 dataset
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <string>
-#include <algorithm> // copy
-#include <iterator>  // ostream_operator
+#include <algorithm>
+#include <iterator>
 #include <iomanip>
 #include <algorithm>
 #include <iterator>
@@ -13,9 +12,15 @@
 #include <cppad/ipopt/solve.hpp>
 #include "csv.h"
 
-#define n_times 3558100 // number of time steps
-#define n_options 7		// number of products
-#define n_types 8		// number of customer types
+// sprint 2 dimensions
+#define n_times 24219  // number of time steps
+#define n_options 4900 // number of products
+#define n_types 18816  // number of customer types
+
+// // sprint 1 dimensions
+// #define n_times 3558100 // number of time steps
+// #define n_options 7		// number of products
+// #define n_types 8		// number of customer types
 
 // GLOBAL VARS
 double m_vec[n_types];		   // m_vector, counts number of occurences of a type n arrival
@@ -86,7 +91,7 @@ int **import_prefs(const char *pref_filename)
 	typedef tokenizer<escaped_list_separator<char>> Tokenizer;
 	std::vector<std::string> vec;
 	std::string line;
-	int header_tf = 1;	// helper vars to ignore header and index values
+	int header_tf = 1; // helper vars to ignore header and index values
 	int index_tf = 1;
 	int col_counter = 0; // col counter for to select which col to insert value
 	int row_counter = 0;
@@ -114,21 +119,23 @@ int **import_prefs(const char *pref_filename)
 
 		// iterate over row tokens
 		for (Tokenizer::iterator it(tok.begin()),
-								end(tok.end());
-			it != end; ++it)
+			 end(tok.end());
+			 it != end; ++it)
 		{
 			// skip first value since it's index
-			if(index_tf == 1){
+			if (index_tf == 1)
+			{
 				index_tf = 0;
 				continue;
 			}
 			pref_matrix[row_counter][col_counter] = std::stoi(*it);
-			col_counter ++;
+			col_counter++;
 		}
-		row_counter ++;
+		row_counter++;
 
 		// printing progress
-		if(row_counter % 100000 == 0){
+		if (row_counter % 1000 == 0)
+		{
 			std::cout << row_counter << std::endl;
 		}
 	}
@@ -200,7 +207,7 @@ int **import_availability(const char *avail_filename)
 	typedef tokenizer<escaped_list_separator<char>> Tokenizer;
 	std::vector<std::string> vec;
 	std::string line;
-	int header_tf = 1;	// helper vars to ignore header and index values
+	int header_tf = 1; // helper vars to ignore header and index values
 	int index_tf = 1;
 	int col_counter = 0; // col counter for to select which col to insert value
 	int row_counter = 0;
@@ -227,21 +234,23 @@ int **import_availability(const char *avail_filename)
 
 		// iterate over row tokens
 		for (Tokenizer::iterator it(tok.begin()),
-								end(tok.end());
-			it != end; ++it)
+			 end(tok.end());
+			 it != end; ++it)
 		{
 			// skip first value since it's index
-			if(index_tf == 1){
+			if (index_tf == 1)
+			{
 				index_tf = 0;
 				continue;
 			}
 			avail_matrix[row_counter][col_counter] = std::stoi(*it);
-			col_counter ++;
+			col_counter++;
 		}
-		row_counter ++;
+		row_counter++;
 
 		// printing progress
-		if(row_counter % 100000 == 0){
+		if (row_counter % 1000 == 0)
+		{
 			std::cout << row_counter << std::endl;
 		}
 	}
@@ -270,7 +279,7 @@ int *import_transactions(const char *trans_filename)
 	typedef tokenizer<escaped_list_separator<char>> Tokenizer;
 	std::vector<std::string> vec;
 	std::string line;
-	int header_tf = 1;	// helper vars to ignore header and index values
+	int header_tf = 1; // helper vars to ignore header and index values
 	int index_tf = 1;
 	int row_counter = 0;
 
@@ -293,20 +302,22 @@ int *import_transactions(const char *trans_filename)
 
 		// iterate over row tokens
 		for (Tokenizer::iterator it(tok.begin()),
-								end(tok.end());
-			it != end; ++it)
+			 end(tok.end());
+			 it != end; ++it)
 		{
 			// skip first value since it's index
-			if(index_tf == 1){
+			if (index_tf == 1)
+			{
 				index_tf = 0;
 				continue;
 			}
 			trans_vec[row_counter] = std::stoi(*it);
 		}
-		row_counter ++;
+		row_counter++;
 
 		// printing progress
-		if(row_counter % 100000 == 0){
+		if (row_counter % 1000 == 0)
+		{
 			std::cout << row_counter << std::endl;
 		}
 	}
@@ -325,8 +336,15 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 	int *ranking;
 	bool compatible; // boolean var to keep track of if a type is compatible
 
+	std::cout << "building mu matrix" << std::endl;
+
 	for (int t = 0; t < n_times; t++)
 	{
+		// printing progress
+		if (t % 1 == 0)
+		{
+			std::cout << t << std::endl;
+		}
 		mu_matrix[t] = new int[n_types];
 		int j_t = trans_vec[t];			  // subtracted for zero indexing
 		for (int i = 0; i < n_types; i++) // iterate over each cust type
@@ -353,6 +371,7 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 			mu_matrix[t][i] = compatible;
 		}
 	}
+	std::cout << "mu matrix done" << std::endl;
 	return mu_matrix;
 }
 
@@ -374,10 +393,17 @@ void count_purchases(int *trans_vec)
 // resurns p_sigma matrix: n_times x n_types matrix
 double **build_cust_type_probs(int **mu_matrix)
 {
+	std::cout << "building sigma matrix" << std::endl;
+
 	double **p_sigma_matrix = 0;
 	p_sigma_matrix = new double *[n_times];
 	for (int t = 0; t < n_times; t++)
 	{
+		// printing progress
+		if (t % 1000 == 0)
+		{
+			std::cout << t << std::endl;
+		}
 		p_sigma_matrix[t] = new double[n_types];
 
 		// first calculate sum probabilities in each time
@@ -401,14 +427,21 @@ double **build_cust_type_probs(int **mu_matrix)
 			}
 		}
 	}
+	std::cout << "sigma matrix done" << std::endl;
 	return p_sigma_matrix;
 }
 
 // updates a_t estimates based on compatible types and transaction data
 void update_arrival_estimates(int *trans_vec, int **mu_matrix)
 {
+	std::cout << "estimating a_t" << std::endl;
 	for (int t = 0; t < n_times; t++)
 	{
+		if (t % 1000 == 0)
+		{
+			std::cout << t << std::endl;
+		}
+
 		if (trans_vec[t] != 0) // case 1: definitely arrival, item was purchased
 		{
 			a_vec[t] = 1;
@@ -435,20 +468,27 @@ void update_arrival_estimates(int *trans_vec, int **mu_matrix)
 			}
 		}
 	}
+	std::cout << "a_t estimation done" << std::endl;
 }
 
 // estimate m vector, last part of e-step
 // returns m_vec: length N
 void estimate_m_vec(double **p_sigma_matrix)
 {
+	std::cout << "estimating m_vec" << std::endl;
 	for (int i = 0; i < n_types; i++)
 	{
+		if (i % 1000 == 0)
+		{
+			std::cout << i << std::endl;
+		}
 		m_vec[i] = 0;
 		for (int t = 0; t < n_times; t++)
 		{
 			m_vec[i] += a_vec[t] * p_sigma_matrix[t][i];
 		}
 	}
+	std::cout << "m_vec estimation done" << std::endl;
 }
 
 // Problem formulated here
@@ -543,9 +583,9 @@ void m_step()
 
 	// options
 	std::string options;
-	// turn off any printing
-	options += "Integer print_level  0\n";
-	options += "String  sb           yes\n";
+	// printing
+	options += "Integer print_level  6\n";
+	options += "String print_timing_statistics  yes\n";
 	// scaling to maximize instead of minimize
 	options += "Numeric obj_scaling_factor   -1\n";
 	// maximum number of iterations
@@ -637,9 +677,9 @@ double real_LL(int **mu_matrix)
 int main()
 {
 	// load data and preprocessing
-	int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_1/types_sprint1.csv");
-	int **avail_matrix = import_availability("../../../data/cabot_data/sprint_1/availability_sprint1.csv");
-	int *trans_vec = import_transactions("../../../data/cabot_data/sprint_1/transactions_pre_sprint1.csv");
+	int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_2/types_s2.csv");
+	int **avail_matrix = import_availability("../../../data/cabot_data/sprint_2/avail_s2.csv");
+	int *trans_vec = import_transactions("../../../data/cabot_data/sprint_2/trans_s2.csv");
 	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
 
 	// Data import debugging prints ##################################################
@@ -675,19 +715,42 @@ int main()
 		//printVector("A_VEC", a_vec, n_times, 5);
 		estimate_m_vec(p_sigma_matrix);
 
+		std::cout << "E-step finished" << std::endl;
+
 		// M step:
 		m_step();
 
 		// find max difference of solution, exit loop if small enough
 		maxdiff = *std::max_element(x_diff_vec, x_diff_vec + n_types);
-		if (1)
+		if (maxdiff < 1e-3)
 		{
 			done = 1;
 		}
+
+		for (int t = 0; t < n_times; t++)
+		{
+			delete[] p_sigma_matrix[t];
+		}
+
+        delete[] p_sigma_matrix;
 		// printVector("CURRENT SOLUTION", current_x_vec, n_types, 3, 5);
 	}
 	printVector("FINAL X_VEC", current_x_vec, n_types, 5, 5);
 	std::cout << "FINAL LAMBDA: " << lambda << std::endl;
+
+	std::ofstream output;
+	output.open("sprint2_results.csv");
+	output << "var,value\n";
+	for (int i = 0; i < n_types; i++)
+	{
+		output << 'x';
+		output << i + 1;
+		output << ',';
+		output << current_x_vec[i];
+		output << '\n';
+	}
+	output << "lambda," << lambda << '\n';
+
 	std::cout << "TEST DONE" << std::endl;
 	return 1;
 }
