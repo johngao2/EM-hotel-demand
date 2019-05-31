@@ -13,9 +13,9 @@
 #include <cppad/ipopt/solve.hpp>
 #include "csv.h"
 
-#define n_times 245 // number of time steps
-#define n_options 8 // number of products
-#define n_types 14  // number of customer types
+#define n_times 3558100 // number of time steps
+#define n_options 7		// number of products
+#define n_types 8		// number of customer types
 
 // GLOBAL VARS
 double m_vec[n_types];		   // m_vector, counts number of occurences of a type n arrival
@@ -86,10 +86,12 @@ int **import_prefs(const char *pref_filename)
 	typedef tokenizer<escaped_list_separator<char>> Tokenizer;
 	std::vector<std::string> vec;
 	std::string line;
-	int header_tf = 1;
+	int header_tf = 1;	// helper vars to ignore header and index values
+	int index_tf = 1;
+	int col_counter = 0; // col counter for to select which col to insert value
+	int row_counter = 0;
 
 	// vars to store data
-	int row_counter = 0;
 	int **pref_matrix = 0; // initialize
 	pref_matrix = new int *[n_types];
 
@@ -97,6 +99,12 @@ int **import_prefs(const char *pref_filename)
 	// read line by line
 	while (getline(in, line))
 	{
+		// declare stuff
+		index_tf = 1;
+		col_counter = 0;
+		Tokenizer tok(line);
+		pref_matrix[row_counter] = new int[n_options + 1]; // new row
+
 		// ignore first line
 		if (header_tf == 1)
 		{
@@ -104,18 +112,20 @@ int **import_prefs(const char *pref_filename)
 			continue;
 		}
 
-		// read current line
-		Tokenizer tok(line);
-		vec.assign(tok.begin(), tok.end());
-
-		pref_matrix[row_counter] = new int[n_options + 1]; // create new row
-
-		// iterate over row
-		for (int i = 1; i < n_options + 2; i++)
+		// iterate over row tokens
+		for (Tokenizer::iterator it(tok.begin()),
+								end(tok.end());
+			it != end; ++it)
 		{
-			pref_matrix[row_counter][i - 1] = std::stoi(vec[i]);
+			// skip first value since it's index
+			if(index_tf == 1){
+				index_tf = 0;
+				continue;
+			}
+			pref_matrix[row_counter][col_counter] = std::stoi(*it);
+			col_counter ++;
 		}
-		row_counter++;
+		row_counter ++;
 
 		// printing progress
 		if(row_counter % 100000 == 0){
@@ -190,16 +200,24 @@ int **import_availability(const char *avail_filename)
 	typedef tokenizer<escaped_list_separator<char>> Tokenizer;
 	std::vector<std::string> vec;
 	std::string line;
-	int header_tf = 1;
+	int header_tf = 1;	// helper vars to ignore header and index values
+	int index_tf = 1;
+	int col_counter = 0; // col counter for to select which col to insert value
+	int row_counter = 0;
 
 	// vars to store data
-	int row_counter = 0;
-	int **avail_matrix = 0;
+	int **avail_matrix = 0; // initialize
 	avail_matrix = new int *[n_times];
 
 	// read line by line
 	while (getline(in, line))
 	{
+		// declare stuff
+		index_tf = 1;
+		col_counter = 0;
+		Tokenizer tok(line);
+		avail_matrix[row_counter] = new int[n_options]; // new row
+
 		// ignore first line
 		if (header_tf == 1)
 		{
@@ -207,17 +225,20 @@ int **import_availability(const char *avail_filename)
 			continue;
 		}
 
-		// read current line
-		Tokenizer tok(line);
-		vec.assign(tok.begin(), tok.end());
-		avail_matrix[row_counter] = new int[n_options]; // create new row
-
-		// iterate over row
-		for (int i = 1; i < n_options + 1; i++)
+		// iterate over row tokens
+		for (Tokenizer::iterator it(tok.begin()),
+								end(tok.end());
+			it != end; ++it)
 		{
-			avail_matrix[row_counter][i - 1] = std::stoi(vec[i]); // i starts at 1 to skip index col
+			// skip first value since it's index
+			if(index_tf == 1){
+				index_tf = 0;
+				continue;
+			}
+			avail_matrix[row_counter][col_counter] = std::stoi(*it);
+			col_counter ++;
 		}
-		row_counter++;
+		row_counter ++;
 
 		// printing progress
 		if(row_counter % 100000 == 0){
@@ -249,15 +270,20 @@ int *import_transactions(const char *trans_filename)
 	typedef tokenizer<escaped_list_separator<char>> Tokenizer;
 	std::vector<std::string> vec;
 	std::string line;
-	int header_tf = 1;
+	int header_tf = 1;	// helper vars to ignore header and index values
+	int index_tf = 1;
+	int row_counter = 0;
 
 	// vars to store data
-	int row_counter = 0;
 	int *trans_vec = new int[n_times];
 
 	// read line by line
 	while (getline(in, line))
 	{
+		// declare stuff
+		index_tf = 1;
+		Tokenizer tok(line);
+
 		// ignore first line
 		if (header_tf == 1)
 		{
@@ -265,11 +291,19 @@ int *import_transactions(const char *trans_filename)
 			continue;
 		}
 
-		// read current line
-		Tokenizer tok(line);
-		vec.assign(tok.begin(), tok.end());
-		trans_vec[row_counter] = std::stoi(vec[1]);
-		row_counter++;
+		// iterate over row tokens
+		for (Tokenizer::iterator it(tok.begin()),
+								end(tok.end());
+			it != end; ++it)
+		{
+			// skip first value since it's index
+			if(index_tf == 1){
+				index_tf = 0;
+				continue;
+			}
+			trans_vec[row_counter] = std::stoi(*it);
+		}
+		row_counter ++;
 
 		// printing progress
 		if(row_counter % 100000 == 0){
@@ -603,9 +637,9 @@ double real_LL(int **mu_matrix)
 int main()
 {
 	// load data and preprocessing
-	int **sigma_matrix = import_prefs("../.../../data/hotel_5/PrefListsBuyUpH5.csv");
-	int **avail_matrix = import_availability("../../../data/hotel_5/AvailabilityH5.csv");
-	int *trans_vec = import_transactions("../../../data/hotel_5/TransactionsH5.csv");
+	int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_1/types_sprint1.csv");
+	int **avail_matrix = import_availability("../../../data/cabot_data/sprint_1/availability_sprint1.csv");
+	int *trans_vec = import_transactions("../../../data/cabot_data/sprint_1/transactions_pre_sprint1.csv");
 	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
 
 	// Data import debugging prints ##################################################
@@ -613,7 +647,7 @@ int main()
 		printMatrix("PREFERENCE MATRIX:", sigma_matrix, 8, n_options + 1, 3);
 		printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, n_options, 3);
 		printVector("TRANSACTION VECTOR:", trans_vec, 10, 3);
-		printMatrix("MU MATRIX:", mu_matrix, 20, n_types, 3);
+		printMatrix("MU MATRIX:", mu_matrix, 10, n_types, 3);
 	}
 
 	// init: set a_vec to 0 x_vec to 1/N, lambda to 0.5, count purchases
