@@ -36,6 +36,8 @@
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "string_view": "cpp",
-        "typeinfo": "cpp"
-    }
+        "typeinfo": "cpp",
+        "string": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
 }

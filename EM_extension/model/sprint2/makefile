@@ -6,7 +6,8 @@ LIBS = 	-L/Users/johngao/work/thesis/CoinIpopt/build/lib		\
 
 INCS = 	-I/Users/johngao/work/thesis/CoinIpopt/build/include/coin/ThirdParty	\
 		-I/Users/johngao/work/thesis/CoinIpopt/build/include 					\
-		-I/Users/johngao/work/thesis/fast-cpp-csv-parser
+		-I/Users/johngao/work/thesis/fast-cpp-csv-parser						\
+		-I/Users/johngao/work/thesis/boost_1_62_0
 
 EM_cabot_s2.o: EM_cabot_s2.cpp
 	g++ -std=c++0x -c EM_cabot_s2.cpp ${INCS}

@@ -488,10 +488,10 @@ int main()
 	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
 	// Data import debugging prints ##################################################
 	{
-		// printMatrix("PREFERENCE MATRIX:", sigma_matrix, 10, n_options + 1, 3);
-		// printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, n_options, 3);
-		// printVector("TRANSACTION VECTOR:", trans_vec, 10, 3);
-		// printMatrix("MU MATRIX:", mu_matrix, 20, n_types, 3);
+		printMatrix("PREFERENCE MATRIX:", sigma_matrix, 8, n_options + 1, 3);
+		printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, n_options, 3);
+		printVector("TRANSACTION VECTOR:", trans_vec, 10, 3);
+		printMatrix("MU MATRIX:", mu_matrix, 20, n_types, 3);
 	}
 
 	// init: set a_vec to 0 x_vec to 1/N, lambda to 0.5, count purchases
@@ -524,7 +524,7 @@ int main()
 
 		// find max difference of solution, exit loop if small enough
 		maxdiff = *std::max_element(x_diff_vec, x_diff_vec + n_types);
-		if (maxdiff < 1e-6)
+		if (1)
 		{
 			done = 1;
 		}

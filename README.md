@@ -47,7 +47,7 @@
 - Data Processing:
   - add 1 to room avail when it goes negative
 - Model:
-  - parse wide csv's (boost spirit is probably a good call)
+  - parse wide csv's (boost tokenizer is probably a good call), https://stackoverflow.com/questions/1120140/how-can-i-read-and-parse-csv-files-in-c/1595366#1595366
   - Add L2 reg **DONE**
   - Debug mem leak with valgrind
   
