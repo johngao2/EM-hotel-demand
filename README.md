@@ -48,16 +48,15 @@
   - parse wide csv's (boost tokenizer is probably a good call), https://stackoverflow.com/questions/1120140/how-can-i-read-and-parse-csv-files-in-c/1595366#1595366 **DONE**
   - Add L2 reg **DONE**
   - Debug mem leak with valgrind **Done for now**
+
+**Step 3 sprint 4 goals:**
+  - Rerun with independent arrive date, stay len
+  - add 1 to available rooms everytime avail goes into negatives (should only affect DD room type, of which 2 were added in 2018)
   
 ## Other notes:
 **Backlog:**
 - Scale num periods by lambda for sparse dates, might fix sparsity problem if implementable
 - Implement RMSE from Van Ryzin paper
-- add 1 to available rooms everytime avail goes into negatives (should only affect DD room type, of which 2 were added in 2018)
-- debug memory leak in model (see if valgrind helps)
-- find out how to parse csv files with many cols (manually might be only option)
-- try l2 regularization
-  - might be able to make obj closed form again
 - try putting intraday transactions at end of day
 
 **misc notes**
@@ -76,6 +75,9 @@
   - all 4 factors independent of each other
   - dow and stay len are independent, unit type and week of arrival are ordered
     - unit type orders are same as sprint 1, week orders are consecutive weeks with sooner preference and later preference types
+
+**Sprint 3 Notes:**
+- We have no way of knowing capacity at beginning of 2018
 
 **misc**
 - Review R GLM for poission regression, what kind of link functions are reasonable?

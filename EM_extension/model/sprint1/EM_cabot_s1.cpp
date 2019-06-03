@@ -524,7 +524,7 @@ int main()
 
 		// find max difference of solution, exit loop if small enough
 		maxdiff = *std::max_element(x_diff_vec, x_diff_vec + n_types);
-		if (maxdiff < 1e-9)
+		if (maxdiff < 1e-3)
 		{
 			done = 1;
 		}
