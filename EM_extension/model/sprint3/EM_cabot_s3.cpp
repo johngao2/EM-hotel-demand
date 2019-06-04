@@ -14,7 +14,7 @@
 // sprint 3 dimensions
 #define n_times 24219  // number of time steps
 #define n_options 4900 // number of products
-#define n_types 4900  // number of customer types
+#define n_types 2800  // number of customer types
 
 // // sprint 1 dimensions
 // #define n_times 3558100 // number of time steps
@@ -255,7 +255,7 @@ int **import_availability(const char *avail_filename)
 		row_counter++;
 
 		// printing progress
-		if (row_counter % 10 == 0)
+		if (row_counter % 1000 == 0)
 		{
 			std::cout << row_counter << std::endl;
 		}
@@ -455,7 +455,7 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 			row_counter++;
 
 			// printing progress
-			if (row_counter % 100000 == 0)
+			if (row_counter % 1000 == 0)
 			{
 				std::cout << row_counter << std::endl;
 			}
@@ -774,8 +774,8 @@ int main()
 
 	// Data import debugging prints ##################################################
 	{
-		printMatrix("PREFERENCE MATRIX:", sigma_matrix, 8, n_options + 1, 3);
-		printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, n_options, 3);
+		printMatrix("PREFERENCE MATRIX:", sigma_matrix, 8, 10, 3);
+		printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, 10, 3);
 		printVector("TRANSACTION VECTOR:", trans_vec, 10, 3);
 		printMatrix("MU MATRIX:", mu_matrix, 10, n_types, 3);
 	}
