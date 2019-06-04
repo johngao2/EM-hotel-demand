@@ -47,12 +47,13 @@
 - Model:
   - parse wide csv's (boost tokenizer is probably a good call), https://stackoverflow.com/questions/1120140/how-can-i-read-and-parse-csv-files-in-c/1595366#1595366 **DONE**
   - Add L2 reg **DONE**
-  - Debug mem leak with valgrind **Done for now**
+  - Debug mem leak with valgrind **Done**
 
 **Step 3 sprint 4 goals:**
-  - Rerun with independent arrive date, stay len
   - add 1 to available rooms everytime avail goes into negatives (should only affect DD room type, of which 2 were added in 2018)
-  
+    - debug weird negative values
+  - Rerun with independent arrive date, stay len
+
 ## Other notes:
 **Backlog:**
 - Scale num periods by lambda for sparse dates, might fix sparsity problem if implementable
