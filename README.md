@@ -52,7 +52,10 @@
 **Step 3 sprint 4 goals:**
   - add 1 to available rooms everytime avail goes into negatives (should only affect DD room type, of which 2 were added in 2018)
     - debug weird negative values
-  - Rerun with independent arrive date, stay len
+  - Rerun with independent all factors **4900 types, still too slow, gradients still too small**
+    - try again without weekday arrivals
+  - Investigate why gradients are so small at the beginning (e.g. with toy example type set)
+  - Edit model such that mu matrix is saved, since building it takes years
 
 ## Other notes:
 **Backlog:**

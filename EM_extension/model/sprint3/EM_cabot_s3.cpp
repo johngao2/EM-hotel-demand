@@ -10,7 +10,6 @@
 #include <math.h>
 #include <boost/tokenizer.hpp>
 #include <cppad/ipopt/solve.hpp>
-#include "csv.h"
 
 // sprint 3 dimensions
 #define n_times 24219  // number of time steps
@@ -28,12 +27,19 @@ double current_x_vec[n_times]; // current solution vector
 double x_diff_vec[n_times];	// tracks changes in solution
 double a_vec[n_times];		   // a_vector, tracks if there was an arrival in a period
 double lambda;				   // arrival parameter
-double alpha = 0.1;			   // regularization hyperparameter
+double alpha = 0;			   // regularization hyperparameter
 int n_purch;				   // tracks number total number of purchases
 
 namespace
 {
 using CppAD::AD;
+
+// helper function to check if a file exists
+bool is_file_exist(const char *fileName)
+{
+	std::ifstream infile(fileName);
+	return infile.good();
+}
 
 // helper function for printing matrices (debugging)
 template <typename T>
@@ -249,7 +255,7 @@ int **import_availability(const char *avail_filename)
 		row_counter++;
 
 		// printing progress
-		if (row_counter % 1000 == 0)
+		if (row_counter % 10 == 0)
 		{
 			std::cout << row_counter << std::endl;
 		}
@@ -331,47 +337,131 @@ int *import_transactions(const char *trans_filename)
 // if value is 1, then that type is compatible in that time period
 int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 {
-	int **mu_matrix = 0;
+	// initialize blank mu matrix
+	int **mu_matrix = 0; // initialize
 	mu_matrix = new int *[n_times];
-	int *ranking;
-	bool compatible; // boolean var to keep track of if a type is compatible
 
-	std::cout << "building mu matrix" << std::endl;
-
-	for (int t = 0; t < n_times; t++)
+	// build mu matrix if it doesn't exist
+	if (!is_file_exist("mu_matrix.csv"))
 	{
-		// printing progress
-		if (t % 100 == 0)
+		std::cout << "MU matrix not found, building it now" << std::endl;
+		// build mu matrix
+		int *ranking;
+		bool compatible; // boolean var to keep track of if a type is compatible
+		for (int t = 0; t < n_times; t++)
 		{
-			std::cout << t << std::endl;
-		}
-		mu_matrix[t] = new int[n_types];
-		int j_t = trans_vec[t];			  // subtracted for zero indexing
-		for (int i = 0; i < n_types; i++) // iterate over each cust type
-		{
-			compatible = 1;
-			ranking = sigma_matrix[i];
-			for (int k = 1; k < n_options + 1; k++) // iterate over each option
+			mu_matrix[t] = new int[n_types];
+			int j_t = trans_vec[t];			  // subtracted for zero indexing
+			for (int i = 0; i < n_types; i++) // iterate over each cust type
 			{
-				bool available = avail_matrix[t][k - 1]; // need to subtract 1 from k due to 1-indexed sigma matrix
-				if (available == 1 && k != j_t)			 // if item is available and not selected
+				compatible = 1;
+				ranking = sigma_matrix[i];
+				for (int k = 1; k < n_options + 1; k++) // iterate over each option
 				{
-					if (sigma_matrix[i][k] < sigma_matrix[i][j_t])
-					// if any item is ranked better than chosen item
+					bool available = avail_matrix[t][k - 1]; // need to subtract 1 from k due to 1-indexed sigma matrix
+					if (available == 1 && k != j_t)			 // if item is available and not selected
 					{
-						compatible = 0;
+						if (sigma_matrix[i][k] < sigma_matrix[i][j_t])
+						// if any item is ranked better than chosen item
+						{
+							compatible = 0;
+						}
 					}
 				}
+				// check if nonpurchase is preferred to chosen item
+				if (sigma_matrix[i][0] < sigma_matrix[i][j_t])
+				{
+					compatible = 0;
+				}
+				mu_matrix[t][i] = compatible;
 			}
-			// check if nonpurchase is preferred to chosen item
-			if (sigma_matrix[i][0] < sigma_matrix[i][j_t])
+			// printing progress
+			if (t % 1 == 0)
 			{
-				compatible = 0;
+				std::cout << t << std::endl;
 			}
-			mu_matrix[t][i] = compatible;
+		}
+
+		// saving mu matrix
+		std::ofstream output;
+		output.open("mu_matrix.csv");
+		// output header
+		output << "idx";
+		for (int i = 0; i < n_types; i++)
+		{
+			output << ',' << std::to_string(i + 1);
+		}
+		output << '\n';
+		// output body
+		for (int t = 0; t < n_times; t++)
+		{
+			output << t;
+			for (int i = 0; i < n_types; i++)
+			{
+				output << ',' << mu_matrix[t][i];
+			}
+			output << '\n';
 		}
 	}
-	std::cout << "mu matrix done" << std::endl;
+	else
+	{
+		// import mu matrix if it exists
+		std::cout << "MU matrix found, importing" << std::endl;
+
+		// importing csv
+		using namespace boost;
+		std::string data("mu_matrix.csv");
+		std::ifstream in(data.c_str());
+
+		// declare parsing vars
+		typedef tokenizer<escaped_list_separator<char>> Tokenizer;
+		std::vector<std::string> vec;
+		std::string line;
+		int header_tf = 1; // helper vars to ignore header and index values
+		int index_tf = 1;
+		int col_counter = 0; // col counter for to select which col to insert value
+		int row_counter = 0;
+
+		// read line by line
+		while (getline(in, line))
+		{
+			// declare stuff
+			index_tf = 1;
+			col_counter = 0;
+			Tokenizer tok(line);
+			mu_matrix[row_counter] = new int[n_types];
+
+			// ignore first line
+			if (header_tf == 1)
+			{
+				header_tf = 0;
+				continue;
+			}
+
+			// iterate over row tokens
+			for (Tokenizer::iterator it(tok.begin()),
+				 end(tok.end());
+				 it != end; ++it)
+			{
+				// skip first value since it's index
+				if (index_tf == 1)
+				{
+					index_tf = 0;
+					continue;
+				}
+				mu_matrix[row_counter][col_counter] = std::stoi(*it);
+				col_counter++;
+			}
+			row_counter++;
+
+			// printing progress
+			if (row_counter % 100000 == 0)
+			{
+				std::cout << row_counter << std::endl;
+			}
+		}
+		std::cout << "Done importing mu matrix" << std::endl;
+	}
 	return mu_matrix;
 }
 
@@ -722,7 +812,7 @@ int main()
 
 		// find max difference of solution, exit loop if small enough
 		maxdiff = *std::max_element(x_diff_vec, x_diff_vec + n_types);
-		if (maxdiff < 1e-3)
+		if (maxdiff < 1)
 		{
 			done = 1;
 		}
