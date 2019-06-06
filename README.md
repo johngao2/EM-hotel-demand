@@ -50,12 +50,15 @@
   - Debug mem leak with valgrind **Done**
 
 **Step 3 sprint 4 goals:**
+  - use python to create sigma matrix
+  - use python to construct mu matrix this time and make sure that product id's and cust types don't need to follow the same format
   - add 1 to available rooms everytime avail goes into negatives (should only affect DD room type, of which 2 were added in 2018)
     - debug weird negative values
-  - Rerun with independent all factors **4900 types, still too slow, gradients still too small**
-    - try again without weekday arrivals
+  - Rerun with independent all factors **4900 types, still too slow, still many ~0 gradient variables**
+    - try again without weekday arrivals 
   - Investigate why gradients are so small at the beginning (e.g. with toy example type set)
-  - Edit model such that mu matrix is saved, since building it takes years
+  - Edit model such that mu matrix is saved, since building it takes years **DONE**
+  - Rewrite model such that cust types use a different format than product id's
 
 ## Other notes:
 **Backlog:**
