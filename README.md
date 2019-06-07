@@ -63,6 +63,7 @@
   - Investigate why gradients are so small at the beginning (e.g. with toy example type set)
   - Edit model such that mu matrix is saved, since building it takes years **DONE**
   - Rewrite model such that cust types use a different format than product id's
+  - derive closed form for regularized LL
 
 ## Other notes:
 **Backlog:**
