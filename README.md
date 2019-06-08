@@ -63,7 +63,9 @@
   - Investigate why gradients are so small at the beginning (e.g. with toy example type set)
   - Edit model such that mu matrix is saved, since building it takes years **DONE**
   - Rewrite model such that cust types use a different format than product id's
-  - derive closed form for regularized LL
+  - **NEW WAY OF OPTIMIZING LL**:
+    - use binary search to find lambda (the lagrange, not arrival rate) such that x_i sums to 1
+    - do this by subbing prospective values into the quadratic soln' on the board and summing all x until sum of x = 1, with a precision of 1e-8
 
 ## Other notes:
 **Backlog:**

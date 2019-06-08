@@ -124,7 +124,7 @@ int **import_prefs(const char *pref_filename)
 		}
 
 		// iterate over row tokens
-		for (Tokenizer::iterator it(tok.begin()),
+		for (Tokenizer::iterator it(tok.begin()),0
 			 end(tok.end());
 			 it != end; ++it)
 		{
