@@ -11,24 +11,29 @@
 #include <boost/tokenizer.hpp>
 #include <cppad/ipopt/solve.hpp>
 
-// sprint 3 dimensions
-#define n_times 24219  // number of time steps
-#define n_options 4900 // number of products
-#define n_types 2800  // number of customer types
+// // sprint 3 dimensions
+// #define n_times 24219
+// #define n_options 4900
+// #define n_types 2800
 
 // // sprint 1 dimensions
-// #define n_times 3558100 // number of time steps
-// #define n_options 7		// number of products
-// #define n_types 8		// number of customer types
+// #define n_times 3558100
+// #define n_options 7
+// #define n_types 8
+
+// toy hotel5 dimensions
+#define n_times 245
+#define n_options 8
+#define n_types 14
 
 // GLOBAL VARS
-double m_vec[n_types];		   // m_vector, counts number of occurences of a type n arrival
-double current_x_vec[n_times]; // current solution vector
-double x_diff_vec[n_times];	// tracks changes in solution
-double a_vec[n_times];		   // a_vector, tracks if there was an arrival in a period
-double lambda;				   // arrival parameter
-double alpha = 0;			   // regularization hyperparameter
-int n_purch;				   // tracks number total number of purchases
+double m_vec[n_types];			// m_vector, counts number of occurences of a type n arrival
+double current_x_vec[n_times];	// current solution vector
+double x_diff_vec[n_times];		// tracks changes in solution
+double a_vec[n_times];			// a_vector, tracks if there was an arrival in a period
+double lambda;					// arrival parameter
+double alpha = 0.1;				// regularization hyperparameter
+int n_purch;					// tracks number total number of purchases
 
 namespace
 {
@@ -124,7 +129,7 @@ int **import_prefs(const char *pref_filename)
 		}
 
 		// iterate over row tokens
-		for (Tokenizer::iterator it(tok.begin()),0
+		for (Tokenizer::iterator it(tok.begin()),
 			 end(tok.end());
 			 it != end; ++it)
 		{
@@ -664,7 +669,7 @@ void m_step()
 	Dvector gl(ng), gu(ng);
 	for (i = 0; i < ng; i++)
 	{
-		gl[i] = 0;
+		gl[i] = 1;
 		gu[i] = 1;
 	}
 
@@ -674,7 +679,7 @@ void m_step()
 	// options
 	std::string options;
 	// printing
-	options += "Integer print_level  6\n";
+	options += "Integer print_level  5\n";
 	options += "String print_timing_statistics  yes\n";
 	// scaling to maximize instead of minimize
 	options += "Numeric obj_scaling_factor   -1\n";
@@ -767,14 +772,14 @@ double real_LL(int **mu_matrix)
 int main()
 {
 	// load data and preprocessing
-	int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_3/types_s3.csv");
-	int **avail_matrix = import_availability("../../../data/cabot_data/sprint_3/avail_s3.csv");
-	int *trans_vec = import_transactions("../../../data/cabot_data/sprint_3/trans_s3.csv");
+	int **sigma_matrix = import_prefs("../../../data/real_data/hotel_5/PrefListsBuyUpH5.csv");
+	int **avail_matrix = import_availability("../../../data/real_data/hotel_5/AvailabilityH5.csv");
+	int *trans_vec = import_transactions("../../../data/real_data/hotel_5/TransactionsH5.csv");
 	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
 
 	// Data import debugging prints ##################################################
 	{
-		printMatrix("PREFERENCE MATRIX:", sigma_matrix, 8, 10, 3);
+		printMatrix("PREFERENCE MATRIX:", sigma_matrix, 8, 9, 3);
 		printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, 10, 3);
 		printVector("TRANSACTION VECTOR:", trans_vec, 10, 3);
 		printMatrix("MU MATRIX:", mu_matrix, 10, n_types, 3);
@@ -812,7 +817,7 @@ int main()
 
 		// find max difference of solution, exit loop if small enough
 		maxdiff = *std::max_element(x_diff_vec, x_diff_vec + n_types);
-		if (maxdiff < 1)
+		if (maxdiff < 1e-4)
 		{
 			done = 1;
 		}
@@ -828,18 +833,18 @@ int main()
 	printVector("FINAL X_VEC", current_x_vec, n_types, 5, 5);
 	std::cout << "FINAL LAMBDA: " << lambda << std::endl;
 
-	std::ofstream output;
-	output.open("sprint3_results.csv");
-	output << "var, value\n";
-	for (int i = 0; i < n_types; i++)
-	{
-		output << 'x';
-		output << i + 1;
-		output << ',';
-		output << current_x_vec[i];
-		output << '\n';
-	}
-	output << "lambda," << lambda << '\n';
+	// std::ofstream output;
+	// output.open("sprint3_results.csv");
+	// output << "var, value\n";
+	// for (int i = 0; i < n_types; i++)
+	// {
+	// 	output << 'x';
+	// 	output << i + 1;
+	// 	output << ',';
+	// 	output << current_x_vec[i];
+	// 	output << '\n';
+	// }
+	// output << "lambda," << lambda << '\n';
 
 	std::cout << "TEST DONE" << std::endl;
 	return 1;

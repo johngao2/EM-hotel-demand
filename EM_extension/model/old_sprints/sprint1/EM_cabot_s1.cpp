@@ -12,9 +12,10 @@
 #include <cppad/ipopt/solve.hpp>
 #include "csv.h"
 
-#define n_times 3558100 // number of time steps
-#define n_options 7		// number of products
-#define n_types 8		// number of customer types
+// toy hotel5 dimensions
+#define n_times 245
+#define n_options 8
+#define n_types 14
 
 // GLOBAL VARS
 double m_vec[n_types];		   // m_vector, counts number of occurences of a type n arrival
@@ -77,9 +78,9 @@ void printVector(const char *text, T mat, std::size_t N, int width, int precisio
 int **import_prefs(const char *pref_filename)
 {
 	// import original preference matrix from data
-	io::CSVReader<9> in(pref_filename);
+	io::CSVReader<10> in(pref_filename);
 	in.read_header(io::ignore_no_column, "cust_type", "rank_1", "rank_2", "rank_3",
-				   "rank_4", "rank_5", "rank_6", "rank_7", "rank_8");
+				   "rank_4", "rank_5", "rank_6", "rank_7", "rank_8", "rank_9");
 	int cust_type;
 	int pref_rank[n_options + 1];
 	int row_counter = 0;
@@ -87,7 +88,7 @@ int **import_prefs(const char *pref_filename)
 	pref_matrix = new int *[n_types];
 	while (in.read_row(cust_type, pref_rank[0], pref_rank[1], pref_rank[2],
 					   pref_rank[3], pref_rank[4], pref_rank[5], pref_rank[6],
-					   pref_rank[7]))
+					   pref_rank[7], pref_rank[8]))
 	{
 		pref_matrix[row_counter] = new int[n_options + 1];
 		for (int i = 0; i < n_options + 1; i++)
@@ -147,16 +148,16 @@ int **import_prefs(const char *pref_filename)
 // returns avail_matrix: a n_times x n_options matrix
 int **import_availability(const char *avail_filename)
 {
-	io::CSVReader<8> in(avail_filename);
+	io::CSVReader<9> in(avail_filename);
 	in.read_header(io::ignore_no_column, "T", "prod_1", "prod_2", "prod_3",
-				   "prod_4", "prod_5", "prod_6", "prod_7");
+				   "prod_4", "prod_5", "prod_6", "prod_7", "prod_8");
 	int t;
 	int prod[n_options];
 	int row_counter = 0;
 	int **avail_matrix = 0;
 	avail_matrix = new int *[n_times];
 	while (in.read_row(t, prod[0], prod[1], prod[2], prod[3], prod[4],
-					   prod[5], prod[6]))
+					   prod[5], prod[6], prod[7]))
 	{
 		avail_matrix[row_counter] = new int[n_options];
 		for (int i = 0; i < n_options; i++)
@@ -173,7 +174,7 @@ int **import_availability(const char *avail_filename)
 int *import_transactions(const char *trans_filename)
 {
 	io::CSVReader<2> in(trans_filename);
-	in.read_header(io::ignore_no_column, "T", "UNIT");
+	in.read_header(io::ignore_no_column, "T", "prod_num");
 	int t;
 	int prod_num;
 	int row_counter = 0;
@@ -482,7 +483,7 @@ void m_step()
 	}
 	// lower and upper limits for g
 	Dvector gl(ng), gu(ng);
-	gl[0] = 0;
+	gl[0] = 1;
 	gu[0] = 1;
 
 	// object that computes objective and constraints
@@ -491,8 +492,8 @@ void m_step()
 	// options
 	std::string options;
 	// printing
-	options += "Integer print_level  5\n";
-	options += "String print_timing_statistics  yes\n";
+	options += "Integer print_level  0\n";
+	// options += "String print_timing_statistics  yes\n";
 	// options += "String  sb           yes\n";
 	// scaling
 	options += "Numeric obj_scaling_factor   -1\n";
@@ -586,9 +587,9 @@ double real_LL(int **mu_matrix)
 int main()
 {
 	// load data and preprocessing
-	int **sigma_matrix = import_prefs("../../../../data/cabot_data/sprint_1/types_s1.csv");
-	int **avail_matrix = import_availability("../../../../data/cabot_data/sprint_1/avail_s1.csv");
-	int *trans_vec = import_transactions("../../../../data/cabot_data/sprint_1/trans_s1.csv");
+	int **sigma_matrix = import_prefs("../../../../data/real_data/hotel_5/PrefListsBuyUpH5.csv");
+	int **avail_matrix = import_availability("../../../../data/real_data/hotel_5/AvailabilityH5.csv");
+	int *trans_vec = import_transactions("../../../../data/real_data/hotel_5/TransactionsH5.csv");
 	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
 
 	// Data import debugging prints ##################################################
