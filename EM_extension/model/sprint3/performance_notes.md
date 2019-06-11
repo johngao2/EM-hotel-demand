@@ -1,5 +1,6 @@
 **BENCHMARK RUN**: 
-    - params: alpha 0.1, stop 1e-4, hotel5 dataset
+    - params: hotel5 dataset, alpha 0.1, stopping criteria 1e-4, 
+    - Final LL: -394.27
     - Timing Statistics:  
 OverallAlgorithm....................:      0.012 (sys:      0.001 wall:      0.013)  
 PrintProblemStatistics.............:      0.000 (sys:      0.000 wall:      0.000)      
@@ -36,3 +37,5 @@ Inequality constraints.............:      0.000 (sys:      0.000 wall:      0.00
 Equality constraint Jacobian.......:      0.000 (sys:      0.000 wall:      0.000)  
 Inequality constraint Jacobian.....:      0.000 (sys:      0.000 wall:      0.000)  
 Lagrangian Hessian.................:      0.004 (sys:      0.000 wall:      0.004)  
+
+**CLOSED FORM RUN 1**

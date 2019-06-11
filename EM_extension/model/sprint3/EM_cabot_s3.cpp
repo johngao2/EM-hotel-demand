@@ -27,13 +27,13 @@
 #define n_types 14
 
 // GLOBAL VARS
-double m_vec[n_types];			// m_vector, counts number of occurences of a type n arrival
-double current_x_vec[n_times];	// current solution vector
-double x_diff_vec[n_times];		// tracks changes in solution
-double a_vec[n_times];			// a_vector, tracks if there was an arrival in a period
-double lambda;					// arrival parameter
-double alpha = 0.1;				// regularization hyperparameter
-int n_purch;					// tracks number total number of purchases
+double m_vec[n_types];		   // m_vector, counts number of occurences of a type n arrival
+double current_x_vec[n_times]; // current solution vector
+double x_diff_vec[n_times];	// tracks changes in solution
+double a_vec[n_times];		   // a_vector, tracks if there was an arrival in a period
+double lambda;				   // arrival parameter
+double alpha = 0.1;			   // regularization hyperparameter
+int n_purch;				   // tracks number total number of purchases
 
 namespace
 {
@@ -84,7 +84,7 @@ void printVector(const char *text, T mat, std::size_t N, int width, int precisio
 // first column represents non-purchase option
 // 0 is most preferred, n_options+1 is least preferred
 // returns sigma_matrix: a n_types x (n_options + 1) matrix
-int **import_prefs(const char *pref_filename)
+int **import_prefs(const char *pref_filename, int verbose = 0)
 {
 	// importing csv
 	using namespace boost;
@@ -111,7 +111,11 @@ int **import_prefs(const char *pref_filename)
 	int **pref_matrix = 0; // initialize
 	pref_matrix = new int *[n_types];
 
-	std::cout << "Loading preferences" << std::endl;
+	if (verbose == 1)
+	{
+		std::cout << "Loading preferences" << std::endl;
+	}
+
 	// read line by line
 	while (getline(in, line))
 	{
@@ -144,10 +148,13 @@ int **import_prefs(const char *pref_filename)
 		}
 		row_counter++;
 
-		// printing progress
-		if (row_counter % 1000 == 0)
+		if (verbose == 1)
 		{
-			std::cout << row_counter << std::endl;
+			// printing progress
+			if (row_counter % 1000 == 0)
+			{
+				std::cout << row_counter << std::endl;
+			}
 		}
 	}
 
@@ -193,15 +200,21 @@ int **import_prefs(const char *pref_filename)
 			}
 		}
 	}
-	std::cout << "Done preferences" << std::endl;
+	if (verbose == 1)
+	{
+		std::cout << "Done preferences" << std::endl;
+	}
 	return sigma_matrix;
 }
 
 // import availability matrix
 // returns avail_matrix: a n_times x n_options matrix
-int **import_availability(const char *avail_filename)
+int **import_availability(const char *avail_filename, int verbose = 0)
 {
-	std::cout << "Loading avail" << std::endl;
+	if (verbose == 1)
+	{
+		std::cout << "Loading avail" << std::endl;
+	}
 	// importing csv
 	using namespace boost;
 	std::string data(avail_filename);
@@ -259,21 +272,30 @@ int **import_availability(const char *avail_filename)
 		}
 		row_counter++;
 
-		// printing progress
-		if (row_counter % 1000 == 0)
+		if (verbose == 1)
 		{
-			std::cout << row_counter << std::endl;
+			// printing progress
+			if (row_counter % 1000 == 0)
+			{
+				std::cout << row_counter << std::endl;
+			}
 		}
 	}
-	std::cout << "Done avail" << std::endl;
+	if (verbose == 1)
+	{
+		std::cout << "Done avail" << std::endl;
+	}
 	return avail_matrix;
 }
 
 // import transaction vector
 // returns trans_vector: a length T vector
-int *import_transactions(const char *trans_filename)
+int *import_transactions(const char *trans_filename, int verbose = 0)
 {
-	std::cout << "Loading trans" << std::endl;
+	if (verbose == 1)
+	{
+		std::cout << "Loading trans" << std::endl;
+	}
 	// importing csv
 	using namespace boost;
 	std::string data(trans_filename);
@@ -327,12 +349,18 @@ int *import_transactions(const char *trans_filename)
 		row_counter++;
 
 		// printing progress
-		if (row_counter % 1000 == 0)
+		if (verbose == 1)
 		{
-			std::cout << row_counter << std::endl;
+			if (row_counter % 1000 == 0)
+			{
+				std::cout << row_counter << std::endl;
+			}
 		}
 	}
-	std::cout << "Done trans" << std::endl;
+	if (verbose == 1)
+	{
+		std::cout << "Done trans" << std::endl;
+	}
 	return trans_vec;
 }
 
@@ -340,7 +368,7 @@ int *import_transactions(const char *trans_filename)
 // returns mu_matrix: a n_times x n_types matrix
 // each col is a type, each row is a time period
 // if value is 1, then that type is compatible in that time period
-int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
+int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec, int verbose = 0)
 {
 	// initialize blank mu matrix
 	int **mu_matrix = 0; // initialize
@@ -380,10 +408,13 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 				}
 				mu_matrix[t][i] = compatible;
 			}
-			// printing progress
-			if (t % 1 == 0)
+			if (verbose == 1)
 			{
-				std::cout << t << std::endl;
+				// printing progress
+				if (t % 1 == 0)
+				{
+					std::cout << t << std::endl;
+				}
 			}
 		}
 
@@ -411,7 +442,10 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 	else
 	{
 		// import mu matrix if it exists
-		std::cout << "MU matrix found, importing" << std::endl;
+		if (verbose == 1)
+		{
+			std::cout << "MU matrix found, importing" << std::endl;
+		}
 
 		// importing csv
 		using namespace boost;
@@ -458,14 +492,19 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec)
 				col_counter++;
 			}
 			row_counter++;
-
-			// printing progress
-			if (row_counter % 1000 == 0)
+			if (verbose == 1)
 			{
-				std::cout << row_counter << std::endl;
+				// printing progress
+				if (row_counter % 1000 == 0)
+				{
+					std::cout << row_counter << std::endl;
+				}
 			}
 		}
-		std::cout << "Done importing mu matrix" << std::endl;
+		if (verbose == 1)
+		{
+			std::cout << "Done importing mu matrix" << std::endl;
+		}
 	}
 	return mu_matrix;
 }
@@ -486,18 +525,24 @@ void count_purchases(int *trans_vec)
 // based on the data and previous guess for xi)
 // p_sigma is confusingly denoted as x_it in the pseudocode
 // resurns p_sigma matrix: n_times x n_types matrix
-double **build_cust_type_probs(int **mu_matrix)
+double **build_cust_type_probs(int **mu_matrix, int verbose = 0)
 {
-	std::cout << "building sigma matrix" << std::endl;
+	if (verbose == 1)
+	{
+		std::cout << "building sigma matrix" << std::endl;
+	}
 
 	double **p_sigma_matrix = 0;
 	p_sigma_matrix = new double *[n_times];
 	for (int t = 0; t < n_times; t++)
 	{
-		// printing progress
-		if (t % 1000 == 0)
+		if (verbose == 1)
 		{
-			std::cout << t << std::endl;
+			// printing progress
+			if (t % 1000 == 0)
+			{
+				std::cout << t << std::endl;
+			}
 		}
 		p_sigma_matrix[t] = new double[n_types];
 
@@ -522,19 +567,25 @@ double **build_cust_type_probs(int **mu_matrix)
 			}
 		}
 	}
-	std::cout << "sigma matrix done" << std::endl;
+	if (verbose == 1)
+	{
+		std::cout << "sigma matrix done" << std::endl;
+	}
 	return p_sigma_matrix;
 }
 
 // updates a_t estimates based on compatible types and transaction data
-void update_arrival_estimates(int *trans_vec, int **mu_matrix)
+void update_arrival_estimates(int *trans_vec, int **mu_matrix, int verbose = 0)
 {
 	std::cout << "estimating a_t" << std::endl;
 	for (int t = 0; t < n_times; t++)
 	{
-		if (t % 1000 == 0)
+		if (verbose == 1)
 		{
-			std::cout << t << std::endl;
+			if (t % 1000 == 0)
+			{
+				std::cout << t << std::endl;
+			}
 		}
 
 		if (trans_vec[t] != 0) // case 1: definitely arrival, item was purchased
@@ -563,19 +614,28 @@ void update_arrival_estimates(int *trans_vec, int **mu_matrix)
 			}
 		}
 	}
-	std::cout << "a_t estimation done" << std::endl;
+	if (verbose == 1)
+	{
+		std::cout << "a_t estimation done" << std::endl;
+	}
 }
 
 // estimate m vector, last part of e-step
 // returns m_vec: length N
 void estimate_m_vec(double **p_sigma_matrix)
 {
-	std::cout << "estimating m_vec" << std::endl;
+	if (verbose == 1)
+	{
+		std::cout << "estimating m_vec" << std::endl;
+	}
 	for (int i = 0; i < n_types; i++)
 	{
-		if (i % 1000 == 0)
+		if (verbose == 1)
 		{
-			std::cout << i << std::endl;
+			if (i % 1000 == 0)
+			{
+				std::cout << i << std::endl;
+			}
 		}
 		m_vec[i] = 0;
 		for (int t = 0; t < n_times; t++)
@@ -583,7 +643,10 @@ void estimate_m_vec(double **p_sigma_matrix)
 			m_vec[i] += a_vec[t] * p_sigma_matrix[t][i];
 		}
 	}
-	std::cout << "m_vec estimation done" << std::endl;
+	if (verbose == 1)
+	{
+		std::cout << "m_vec estimation done" << std::endl;
+	}
 }
 
 // Problem formulated here
@@ -749,6 +812,8 @@ void closed_form_m_step()
 	{
 		LL += m_vec[i] * log(current_x_vec[i]);
 	}
+
+	std::cout << "CURRENT OBJECTIVE VALUE: " << LL << std::endl;
 }
 
 // calculates different LL function using equation (2)
@@ -779,10 +844,10 @@ int main()
 
 	// Data import debugging prints ##################################################
 	{
-		printMatrix("PREFERENCE MATRIX:", sigma_matrix, 8, 9, 3);
-		printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, 10, 3);
-		printVector("TRANSACTION VECTOR:", trans_vec, 10, 3);
-		printMatrix("MU MATRIX:", mu_matrix, 10, n_types, 3);
+		// printMatrix("PREFERENCE MATRIX:", sigma_matrix, 8, 9, 3);
+		// printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, 10, 3);
+		// printVector("TRANSACTION VECTOR:", trans_vec, 10, 3);
+		// printMatrix("MU MATRIX:", mu_matrix, 10, n_types, 3);
 	}
 
 	// init: set a_vec to 0 x_vec to 1/N, lambda to 0.5, count purchases
@@ -813,11 +878,11 @@ int main()
 		std::cout << "E-step finished" << std::endl;
 
 		// M step:
-		m_step();
+		closed_form_m_step();
 
 		// find max difference of solution, exit loop if small enough
 		maxdiff = *std::max_element(x_diff_vec, x_diff_vec + n_types);
-		if (maxdiff < 1e-4)
+		if (maxdiff < 1)
 		{
 			done = 1;
 		}

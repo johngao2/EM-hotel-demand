@@ -44,25 +44,24 @@
   - Code up VR AIC and RMSE metrics for testing **DONE AIC**
 
 **Step 3 sprint 3 goals:**
-- Model:
-  - parse wide csv's (boost tokenizer is probably a good call), https://stackoverflow.com/questions/1120140/how-can-i-read-and-parse-csv-files-in-c/1595366#1595366 **DONE**
-  - Add L2 reg **DONE**
-  - Debug mem leak with valgrind **Done**
-  - use python to construct mu matrix this time and make sure that product id's and cust types don't need to follow the same format
-  - add 1 to available rooms everytime avail goes into negatives (should only affect DD room type, of which 2 were added in 2018)
-    - debug weird negative values
-  - Rerun with independent all factors **4900 types, still too slow, still many ~0 gradient variables**
-    - try again without weekday arrivals 
-  - Edit model such that mu matrix is saved, since building it takes years **DONE**
-  - Rewrite model such that cust types use a different format than product id's
-  - **NEW WAY OF OPTIMIZING LL**:
-    - use binary search to find lambda (the lagrange, not arrival rate) such that x_i sums to 1
-    - do this by subbing prospective values into the quadratic soln' on the board and summing all x until sum of x = 1, with a precision of 1e-8
-  - use python to create sigma matrix (or preference matrix) **CURRENTLY TABLED**
-    - remember, sigma matrix is an n_types x n_options + 1 matrix, where each row is a type and each col is a product, col 0 being nonpurchase
-      - each cell value is the rank for that product, for that type
-    - possible issues:
-      - if arrive date and unit are not part of type info, then there are multiple products that a customer could be ok with
+- parse wide csv's (boost tokenizer is probably a good call), https://stackoverflow.com/questions/1120140/how-can-i-read-and-parse-csv-files-in-c/1595366#1595366 **DONE**
+- Add L2 reg **DONE**
+- Debug mem leak with valgrind **Done**
+- use python to construct mu matrix this time and make sure that product id's and cust types don't need to follow the same format
+- add 1 to available rooms everytime avail goes into negatives (should only affect DD room type, of which 2 were added in 2018)
+  - debug weird negative values
+- Rerun with independent all factors **4900 types, still too slow, still many ~0 gradient variables**
+  - try again without weekday arrivals 
+- Edit model such that mu matrix is saved, since building it takes years **DONE**
+- Rewrite model such that cust types use a different format than product id's
+- **NEW WAY OF OPTIMIZING LL**:
+  - use binary search to find lambda (the lagrange, not arrival rate) such that x_i sums to 1
+  - do this by subbing prospective values into the quadratic soln' on the board and summing all x until sum of x = 1, with a precision of 1e-8
+- use python to create sigma matrix (or preference matrix) **CURRENTLY TABLED**
+  - remember, sigma matrix is an n_types x n_options + 1 matrix, where each row is a type and each col is a product, col 0 being nonpurchase
+    - each cell value is the rank for that product, for that type
+  - possible issues:
+    - if arrive date and unit are not part of type info, then there are multiple products that a customer could be ok with
 
 ## Other notes:
 **Backlog:**
