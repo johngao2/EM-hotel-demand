@@ -21,19 +21,19 @@
 // #define n_options 7
 // #define n_types 8
 
-// toy hotel5 dimensions
-#define n_times 245
-#define n_options 8
-#define n_types 14
+// sim data dimensions
+#define n_times 100000 // number of time steps
+#define n_options 15   // number of products
+#define n_types 10	 // number of customer types
 
 // GLOBAL VARS
-double m_vec[n_types];		   // m_vector, counts number of occurences of a type n arrival
-double current_x_vec[n_times]; // current solution vector
-double x_diff_vec[n_times];	// tracks changes in solution
-double a_vec[n_times];		   // a_vector, tracks if there was an arrival in a period
-double lambda;				   // arrival parameter
-double alpha = 0.1;			   // regularization hyperparameter
-int n_purch;				   // tracks number total number of purchases
+double m_vec[n_types];			   // m_vector, counts number of occurences of a type n arrival
+double current_x_vec[n_types + 1]; // current solution vector
+double x_diff_vec[n_types];		   // tracks changes in solution
+double a_vec[n_times];			   // a_vector, tracks if there was an arrival in a period
+double lambda;					   // arrival parameter
+double alpha = 0.1;				   // regularization hyperparameter
+int n_purch;					   // tracks number total number of purchases
 
 namespace
 {
@@ -442,10 +442,7 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec, int v
 	else
 	{
 		// import mu matrix if it exists
-		if (verbose == 1)
-		{
-			std::cout << "MU matrix found, importing" << std::endl;
-		}
+		std::cout << "MU matrix found, importing" << std::endl;
 
 		// importing csv
 		using namespace boost;
@@ -549,6 +546,7 @@ double **build_cust_type_probs(int **mu_matrix, int verbose = 0)
 		// first calculate sum probabilities in each time
 		// this is the denominator sum(x_h) for all compatible types h
 		double sumprob = 0;
+
 		for (int i = 0; i < n_types; i++)
 		{
 			sumprob += mu_matrix[t][i] * current_x_vec[i];
@@ -577,7 +575,10 @@ double **build_cust_type_probs(int **mu_matrix, int verbose = 0)
 // updates a_t estimates based on compatible types and transaction data
 void update_arrival_estimates(int *trans_vec, int **mu_matrix, int verbose = 0)
 {
-	std::cout << "estimating a_t" << std::endl;
+	if (verbose == 1)
+	{
+		std::cout << "estimating a_t" << std::endl;
+	}
 	for (int t = 0; t < n_times; t++)
 	{
 		if (verbose == 1)
@@ -622,7 +623,7 @@ void update_arrival_estimates(int *trans_vec, int **mu_matrix, int verbose = 0)
 
 // estimate m vector, last part of e-step
 // returns m_vec: length N
-void estimate_m_vec(double **p_sigma_matrix)
+void estimate_m_vec(double **p_sigma_matrix, int verbose = 0)
 {
 	if (verbose == 1)
 	{
@@ -788,30 +789,111 @@ void m_step()
 }
 
 // alternate m_step function for testing
-void closed_form_m_step()
+void closed_form_m_step(double search_bound, int iter_limit, int verbose = 0)
 {
-	// calculate sum of m vec
-	double m_sum;
-	for (int i = 0; i < n_types; i++)
+	if (verbose == 1)
 	{
-		m_sum += m_vec[i];
+		std::cout << "Searching for lagrange multiplier" << std::endl;
+	}
+
+	// binary search for lagrange multiplier
+	double sum_x = 0;
+	double lagm = 0; // lagrange multiplier
+	double upper_bound = search_bound;
+	double lower_bound = -search_bound;
+	int iter_count = 0;
+	double temp_x_vec[n_types];
+
+	while (sum_x <= 1 - 1e-8 || sum_x >= 1 + 1e-8)
+	{
+		std::cout << "LAGM: " << lagm << std::endl;
+		sum_x = 0;
+		// calc sum of xi with current lambda
+		for (int i = 0; i < n_types; i++)
+		{
+			temp_x_vec[i] = (-lagm + sqrt(pow(lagm, 2) + 8 * alpha + m_vec[i])) / (4 * alpha);
+			sum_x += temp_x_vec[i];
+		}
+
+		// alter lagrange multiplier accordingly
+		if (sum_x > 1) // sum x_i too high, increase lagrange multiplier
+		{
+			lower_bound = lagm;
+			lagm = (lagm + upper_bound) / 2;
+		}
+		else // sum x_i too low, increase lagrange multiplier
+		{
+			upper_bound = lagm;
+			lagm = (lagm - lower_bound) / 2;
+		}
+
+		iter_count += 1;
+		if (verbose == 1)
+		{
+			if (iter_count % 10 == 0)
+			{
+				std::cout << "Current lagrange iteration: " << iter_count << std::endl;
+				std::cout << "LAGM: " << lagm << std::endl;
+			}
+		}
+
+		// stopping if nothing found
+		if (iter_count > iter_limit)
+		{
+			std::cout << "Could not find lagrange multiplier within the given bounds" << std::endl;
+			exit(1);
+		}
 	}
 
 	// update x vec using closed form solution
-	double new_x;
 	for (int i = 0; i < n_types; i++)
 	{
-		new_x = m_vec[i] / m_sum;
-		x_diff_vec[i] = std::abs(new_x - current_x_vec[i]);
-		current_x_vec[i] = new_x;
+		x_diff_vec[i] = std::abs(temp_x_vec[i] - current_x_vec[i]);
+		current_x_vec[i] = temp_x_vec[i];
+		std::cout << "X" << i << ": " << current_x_vec[i] << std::endl;
 	}
 
-	// calculate objective value
-	double LL;
+	// calculating objective value
+	// add log type probs to objective
+	double LL = 0;
 	for (int i = 0; i < n_types; i++)
 	{
 		LL += m_vec[i] * log(current_x_vec[i]);
 	}
+
+	// calculating sum ambiguous a_t
+	double sum_ambiguous_a = 0;
+	for (int t = 0; t < n_times; t++)
+	{
+		if (a_vec[t] != 1)
+		{
+			sum_ambiguous_a += a_vec[t];
+		}
+	}
+
+	std::cout << "Sum ambig a " << sum_ambiguous_a << std::endl;
+
+	// get lambda using closed form solution
+	lambda = (n_purch + sum_ambiguous_a) / n_times;
+	if (lambda == 1)
+	{ // adjusting lambda from 1 in case it happens so that log still works
+		lambda -= 1e-9;
+	}
+
+	std::cout << "lambda " << lambda << std::endl;
+
+	// calculating sum of regularization terms
+	double reg_sum = 0;
+	for (int i = 0; i < n_types; i++)
+	{
+		reg_sum += pow(current_x_vec[i], 2);
+	}
+	reg_sum = reg_sum * alpha;
+
+	std::cout << "reg_sum " << reg_sum << std::endl;
+
+	// combining in main function
+	LL += (n_purch + sum_ambiguous_a) * lambda + ((n_times - n_purch) - sum_ambiguous_a) * log(1 - lambda) - reg_sum;
 
 	std::cout << "CURRENT OBJECTIVE VALUE: " << LL << std::endl;
 }
@@ -837,17 +919,17 @@ double real_LL(int **mu_matrix)
 int main()
 {
 	// load data and preprocessing
-	int **sigma_matrix = import_prefs("../../../data/real_data/hotel_5/PrefListsBuyUpH5.csv");
-	int **avail_matrix = import_availability("../../../data/real_data/hotel_5/AvailabilityH5.csv");
-	int *trans_vec = import_transactions("../../../data/real_data/hotel_5/TransactionsH5.csv");
+	int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.8/100000/1/types.csv");
+	int **avail_matrix = import_availability("../../../data/simulated_data/l0.8/100000/1/avail.csv");
+	int *trans_vec = import_transactions("../../../data/simulated_data/l0.8/100000/1/trans.csv");
 	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
 
 	// Data import debugging prints ##################################################
 	{
-		// printMatrix("PREFERENCE MATRIX:", sigma_matrix, 8, 9, 3);
-		// printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, 10, 3);
-		// printVector("TRANSACTION VECTOR:", trans_vec, 10, 3);
-		// printMatrix("MU MATRIX:", mu_matrix, 10, n_types, 3);
+		printMatrix("PREFERENCE MATRIX:", sigma_matrix, 8, 9, 3);
+		printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, 10, 3);
+		printVector("TRANSACTION VECTOR:", trans_vec, 10, 3);
+		printMatrix("MU MATRIX:", mu_matrix, 10, n_types, 3);
 	}
 
 	// init: set a_vec to 0 x_vec to 1/N, lambda to 0.5, count purchases
@@ -855,34 +937,38 @@ int main()
 	std::fill_n(current_x_vec, n_types, 1.0 / n_types);
 	lambda = 0.3;
 	count_purchases(trans_vec);
-	std::cout << "NUM_PURCHASES: " << n_purch << std::endl;
+
+	// std::cout << "NUM_PURCHASES: " << n_purch << std::endl;
+
 	// initialization debugging prints:
 	{
 		// printVector("A_VEC", a_vec, 10, 5);
 		// printVector("current_x_vec", current_x_vec, 10, 5);
 	}
-	double maxdiff;
 
 	// EM loop starts here
+	double maxdiff;
 	bool done = 0;
 	while (!done)
 	{
 		// E step:
 		// update cust type probs
-		double **p_sigma_matrix = build_cust_type_probs(mu_matrix);
+		double **p_sigma_matrix = build_cust_type_probs(mu_matrix, 1);
 		// update a_t predictions
 		update_arrival_estimates(trans_vec, mu_matrix);
-		//printVector("A_VEC", a_vec, n_times, 5);
 		estimate_m_vec(p_sigma_matrix);
+
+		// // check that a_vec prediciton works
+		// printVector("A_VEC", a_vec, n_times, 5);
 
 		std::cout << "E-step finished" << std::endl;
 
 		// M step:
-		closed_form_m_step();
+		closed_form_m_step(1e6, 1e6, 1);
 
 		// find max difference of solution, exit loop if small enough
 		maxdiff = *std::max_element(x_diff_vec, x_diff_vec + n_types);
-		if (maxdiff < 1)
+		if (maxdiff < 1e-4)
 		{
 			done = 1;
 		}
@@ -895,9 +981,11 @@ int main()
 		delete[] p_sigma_matrix;
 		// printVector("CURRENT SOLUTION", current_x_vec, n_types, 3, 5);
 	}
+	// print final fitted params
 	printVector("FINAL X_VEC", current_x_vec, n_types, 5, 5);
 	std::cout << "FINAL LAMBDA: " << lambda << std::endl;
 
+	// // save to csv
 	// std::ofstream output;
 	// output.open("sprint3_results.csv");
 	// output << "var, value\n";

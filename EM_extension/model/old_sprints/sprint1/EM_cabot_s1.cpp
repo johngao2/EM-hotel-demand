@@ -19,8 +19,8 @@
 
 // GLOBAL VARS
 double m_vec[n_types];		   // m_vector, counts number of occurences of a type n arrival
-double current_x_vec[n_times]; // current solution vector
-double x_diff_vec[n_times];	// tracks changes in solution
+double current_x_vec[n_types]; // current solution vector
+double x_diff_vec[n_types];	// tracks changes in solution
 double a_vec[n_times];		   // a_vector, tracks if there was an arrival in a period
 double lambda;				   // arrival parameter
 double current_obj;			   // stores objective
@@ -630,7 +630,7 @@ int main()
 
 		// find max difference of solution, exit loop if small enough
 		maxdiff = *std::max_element(x_diff_vec, x_diff_vec + n_types);
-		if (maxdiff < 1)
+		if (maxdiff < 1e-3)
 		{
 			done = 1;
 		}
