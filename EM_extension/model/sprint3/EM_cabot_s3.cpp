@@ -16,15 +16,10 @@
 // #define n_options 4900
 // #define n_types 2800
 
-// // sprint 1 dimensions
-// #define n_times 3558100
-// #define n_options 7
-// #define n_types 8
-
-// sim data dimensions
-#define n_times 100000 // number of time steps
-#define n_options 15   // number of products
-#define n_types 10	 // number of customer types
+// sprint 1 dimensions
+#define n_times 3558100
+#define n_options 7
+#define n_types 8
 
 // GLOBAL VARS
 double m_vec[n_types];			   // m_vector, counts number of occurences of a type n arrival
@@ -806,7 +801,6 @@ void closed_form_m_step(double search_bound, int iter_limit, int verbose = 0)
 
 	while (sum_x <= 1 - 1e-8 || sum_x >= 1 + 1e-8)
 	{
-		std::cout << "LAGM: " << lagm << std::endl;
 		sum_x = 0;
 		// calc sum of xi with current lambda
 		for (int i = 0; i < n_types; i++)
@@ -850,7 +844,6 @@ void closed_form_m_step(double search_bound, int iter_limit, int verbose = 0)
 	{
 		x_diff_vec[i] = std::abs(temp_x_vec[i] - current_x_vec[i]);
 		current_x_vec[i] = temp_x_vec[i];
-		std::cout << "X" << i << ": " << current_x_vec[i] << std::endl;
 	}
 
 	// calculating objective value
@@ -871,16 +864,12 @@ void closed_form_m_step(double search_bound, int iter_limit, int verbose = 0)
 		}
 	}
 
-	std::cout << "Sum ambig a " << sum_ambiguous_a << std::endl;
-
 	// get lambda using closed form solution
 	lambda = (n_purch + sum_ambiguous_a) / n_times;
 	if (lambda == 1)
 	{ // adjusting lambda from 1 in case it happens so that log still works
 		lambda -= 1e-9;
 	}
-
-	std::cout << "lambda " << lambda << std::endl;
 
 	// calculating sum of regularization terms
 	double reg_sum = 0;
@@ -890,7 +879,12 @@ void closed_form_m_step(double search_bound, int iter_limit, int verbose = 0)
 	}
 	reg_sum = reg_sum * alpha;
 
-	std::cout << "reg_sum " << reg_sum << std::endl;
+	if (verbose == 1)
+	{
+		std::cout << "Sum ambig a " << sum_ambiguous_a << std::endl;
+		std::cout << "lambda " << lambda << std::endl;
+		std::cout << "reg_sum " << reg_sum << std::endl;
+	}
 
 	// combining in main function
 	LL += (n_purch + sum_ambiguous_a) * lambda + ((n_times - n_purch) - sum_ambiguous_a) * log(1 - lambda) - reg_sum;
@@ -919,9 +913,9 @@ double real_LL(int **mu_matrix)
 int main()
 {
 	// load data and preprocessing
-	int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.8/100000/1/types.csv");
-	int **avail_matrix = import_availability("../../../data/simulated_data/l0.8/100000/1/avail.csv");
-	int *trans_vec = import_transactions("../../../data/simulated_data/l0.8/100000/1/trans.csv");
+	int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_1/types_s1.csv");
+	int **avail_matrix = import_availability("../../../data/cabot_data/sprint_1/avail_s1.csv");
+	int *trans_vec = import_transactions("../../../data/cabot_data/sprint_1/trans_s1.csv");
 	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
 
 	// Data import debugging prints ##################################################
@@ -953,7 +947,7 @@ int main()
 	{
 		// E step:
 		// update cust type probs
-		double **p_sigma_matrix = build_cust_type_probs(mu_matrix, 1);
+		double **p_sigma_matrix = build_cust_type_probs(mu_matrix);
 		// update a_t predictions
 		update_arrival_estimates(trans_vec, mu_matrix);
 		estimate_m_vec(p_sigma_matrix);
@@ -964,11 +958,11 @@ int main()
 		std::cout << "E-step finished" << std::endl;
 
 		// M step:
-		closed_form_m_step(1e6, 1e6, 1);
+		closed_form_m_step(1e6, 1e6);
 
 		// find max difference of solution, exit loop if small enough
 		maxdiff = *std::max_element(x_diff_vec, x_diff_vec + n_types);
-		if (maxdiff < 1e-4)
+		if (maxdiff < 1e-3)
 		{
 			done = 1;
 		}
@@ -985,19 +979,19 @@ int main()
 	printVector("FINAL X_VEC", current_x_vec, n_types, 5, 5);
 	std::cout << "FINAL LAMBDA: " << lambda << std::endl;
 
-	// // save to csv
-	// std::ofstream output;
-	// output.open("sprint3_results.csv");
-	// output << "var, value\n";
-	// for (int i = 0; i < n_types; i++)
-	// {
-	// 	output << 'x';
-	// 	output << i + 1;
-	// 	output << ',';
-	// 	output << current_x_vec[i];
-	// 	output << '\n';
-	// }
-	// output << "lambda," << lambda << '\n';
+	// save to csv
+	std::ofstream output;
+	output.open("sprint3_results.csv");
+	output << "var, value\n";
+	for (int i = 0; i < n_types; i++)
+	{
+		output << 'x';
+		output << i + 1;
+		output << ',';
+		output << current_x_vec[i];
+		output << '\n';
+	}
+	output << "lambda," << lambda << '\n';
 
 	std::cout << "TEST DONE" << std::endl;
 	return 1;

@@ -5,7 +5,7 @@
     - Closed form:
         - LL: -213.30
 
-**SIM DATA BENCHMARK RUN**
+**SIM DATA**
     - dataset: 10k times, 15 products, 10 types, sample #1
     - params: alpha 0.1, stopping criteria 1e-4, 
     - True values:
@@ -21,3 +21,11 @@
         - x_vec: [0.15428, 0.23251, 0.08725, 0.00759, 0.14325, 0.06021, 0.07410, 0.02171, 0.20693, 0.01215]
         - lambda: 0.78511
         - RMSE: 0.007853
+
+**SPRINT 1 DATA**
+    - dataset: 3.5 times, 7 products, 8 types
+    - params: alpha 0.1, stopping criteria 1e-3, 
+    - Benchmark:
+        - LL: -54573.92
+    - Closed form:
+        -
