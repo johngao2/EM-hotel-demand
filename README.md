@@ -62,6 +62,7 @@
     - each cell value is the rank for that product, for that type
   - possible issues:
     - if arrive date and unit are not part of type info, then there are multiple products that a customer could be ok with
+- implement day of week lambdas
 
 ## Other notes:
 **Backlog:**
