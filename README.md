@@ -53,11 +53,21 @@
   - try again without weekday arrivals **still stuck on 2nd deriv checker**
 - Edit model such that mu matrix is saved, since building it takes years **DONE**
 - Rewrite model such that cust types use a different format than product id's
+<<<<<<< HEAD
 - use binary search to find lagrange multiplier such that x_i sums to 1 **DONE**
   - do this by subbing prospective values into the quadratic soln' on the board and summing all x until sum of x = 1, with a precision of 1e-8 **DONE**
 - move sigma and mu matrix preprocessing to python **tabled**
 - make 18 and 19 more general w.r.t different lambdas
   - 18 can probably just add a t subscript, but 19 will need more work
+- **NEW WAY OF OPTIMIZING LL**:
+  - use binary search to find lambda (the lagrange, not arrival rate) such that x_i sums to 1
+  - do this by subbing prospective values into the quadratic soln' on the board and summing all x until sum of x = 1, with a precision of 1e-8
+- use python to create sigma matrix (or preference matrix) **CURRENTLY TABLED**
+  - remember, sigma matrix is an n_types x n_options + 1 matrix, where each row is a type and each col is a product, col 0 being nonpurchase
+    - each cell value is the rank for that product, for that type
+  - possible issues:
+    - if arrive date and unit are not part of type info, then there are multiple products that a customer could be ok with
+- implement day of week lambdas
 
 ## Other notes:
 **Backlog:**
