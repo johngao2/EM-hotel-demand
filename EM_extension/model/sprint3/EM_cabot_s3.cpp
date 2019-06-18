@@ -11,15 +11,15 @@
 #include <boost/tokenizer.hpp>
 #include <cppad/ipopt/solve.hpp>
 
-// sprint 3 dimensions
-#define n_times 24219
-#define n_options 4900
-#define n_types 4900
+// // sprint 3 dimensions
+// #define n_times 24219
+// #define n_options 4900
+// #define n_types 4900
 
-// // sprint 1 dimensions
-// #define n_times 3558100
-// #define n_options 7
-// #define n_types 8
+// sprint 1 dimensions
+#define n_times 3558100
+#define n_options 7
+#define n_types 8
 
 // GLOBAL VARS
 double m_vec[n_types];			   // m_vector, counts number of occurences of a type n arrival
@@ -906,16 +906,15 @@ double real_LL(int **mu_matrix)
 		temp = log(temp);
 		LL += temp;
 	}
-
 	return LL;
 }
 
 int main()
 {
 	// load data and preprocessing
-	int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_3/types_s3.csv", 1);
-	int **avail_matrix = import_availability("../../../data/cabot_data/sprint_3/avail_s3.csv", 1);
-	int *trans_vec = import_transactions("../../../data/cabot_data/sprint_3/trans_s3.csv", 1);
+	int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_1/types_s1.csv");
+	int **avail_matrix = import_availability("../../../data/cabot_data/sprint_1/avail_s1.csv");
+	int *trans_vec = import_transactions("../../../data/cabot_data/sprint_1/trans_s1.csv");
 	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec, 1);
 
 	// Data import debugging prints ##################################################
