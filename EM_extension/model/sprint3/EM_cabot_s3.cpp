@@ -11,15 +11,15 @@
 #include <boost/tokenizer.hpp>
 #include <cppad/ipopt/solve.hpp>
 
-// // sprint 3 dimensions
-// #define n_times 24219
-// #define n_options 4900
-// #define n_types 2800
+// sprint 3 dimensions
+#define n_times 24219
+#define n_options 4900
+#define n_types 4900
 
-// sprint 1 dimensions
-#define n_times 3558100
-#define n_options 7
-#define n_types 8
+// // sprint 1 dimensions
+// #define n_times 3558100
+// #define n_options 7
+// #define n_types 8
 
 // GLOBAL VARS
 double m_vec[n_types];			   // m_vector, counts number of occurences of a type n arrival
@@ -913,10 +913,10 @@ double real_LL(int **mu_matrix)
 int main()
 {
 	// load data and preprocessing
-	int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_1/types_s1.csv");
-	int **avail_matrix = import_availability("../../../data/cabot_data/sprint_1/avail_s1.csv");
-	int *trans_vec = import_transactions("../../../data/cabot_data/sprint_1/trans_s1.csv");
-	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
+	int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_3/types_s3.csv", 1);
+	int **avail_matrix = import_availability("../../../data/cabot_data/sprint_3/avail_s3.csv", 1);
+	int *trans_vec = import_transactions("../../../data/cabot_data/sprint_3/trans_s3.csv", 1);
+	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec, 1);
 
 	// Data import debugging prints ##################################################
 	{
@@ -947,10 +947,10 @@ int main()
 	{
 		// E step:
 		// update cust type probs
-		double **p_sigma_matrix = build_cust_type_probs(mu_matrix);
+		double **p_sigma_matrix = build_cust_type_probs(mu_matrix, 1);
 		// update a_t predictions
-		update_arrival_estimates(trans_vec, mu_matrix);
-		estimate_m_vec(p_sigma_matrix);
+		update_arrival_estimates(trans_vec, mu_matrix, 1);
+		estimate_m_vec(p_sigma_matrix, 1);
 
 		// // check that a_vec prediciton works
 		// printVector("A_VEC", a_vec, n_times, 5);
@@ -958,11 +958,11 @@ int main()
 		std::cout << "E-step finished" << std::endl;
 
 		// M step:
-		closed_form_m_step(1e6, 1e6);
+		closed_form_m_step(1e6, 1e6, 1);
 
 		// find max difference of solution, exit loop if small enough
 		maxdiff = *std::max_element(x_diff_vec, x_diff_vec + n_types);
-		if (maxdiff < 1e-3)
+		if (maxdiff < 1e-9)
 		{
 			done = 1;
 		}
@@ -976,7 +976,7 @@ int main()
 		// printVector("CURRENT SOLUTION", current_x_vec, n_types, 3, 5);
 	}
 	// print final fitted params
-	printVector("FINAL X_VEC", current_x_vec, n_types, 5, 5);
+	// printVector("FINAL X_VEC", current_x_vec, n_types, 5, 5);
 	std::cout << "FINAL LAMBDA: " << lambda << std::endl;
 
 	// save to csv

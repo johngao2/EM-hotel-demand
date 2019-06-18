@@ -23,9 +23,17 @@
         - RMSE: 0.007853
 
 **SPRINT 1 DATA**
-    - dataset: 3.5 times, 7 products, 8 types
+    - dataset: 3.5m times, 7 products, 8 types
     - params: alpha 0.1, stopping criteria 1e-3, 
     - Benchmark:
         - LL: -54573.92
     - Closed form:
-        -
+        - LL: -16405.24
+
+**Independent model:**
+    - dataset: 24k times, 4900 products, 4900 types
+    - params: alpha 0.1, stopping criteria 1e-9, 
+    - Benchmark:
+        - too slow, unrunnable
+    - Closed form:
+        - LL: -50089.51
