@@ -16,19 +16,30 @@
 // #define n_options 4900
 // #define n_types 4900
 
-// sprint 1 dimensions
-#define n_times 3558100
-#define n_options 7
-#define n_types 8
+// // sprint 1 dimensions
+// #define n_times 3558100
+// #define n_options 7
+// #define n_types 8
+
+// toy dimensions
+#define n_times 100000 // number of time steps
+#define n_options 15   // number of products
+#define n_types 10	 // number of customer types
+
+// number of different lambdas
+#define n_lambdas 1
 
 // GLOBAL VARS
-double m_vec[n_types];			   // m_vector, counts number of occurences of a type n arrival
-double current_x_vec[n_types + 1]; // current solution vector
-double x_diff_vec[n_types];		   // tracks changes in solution
-double a_vec[n_times];			   // a_vector, tracks if there was an arrival in a period
-double lambda;					   // arrival parameter
-double alpha = 0.1;				   // regularization hyperparameter
 int n_purch;					   // tracks number total number of purchases
+double m_vec[n_types];			   // m_vector, counts number of occurences of a type n arrival
+double x_vec[n_types];			   // current solution vector
+double x_diff_vec[n_types];		   // tracks changes in x's
+double a_vec[n_times];			   // a_vector, tracks if there was an arrival in a period
+double lambda_vec[n_lambdas];	  // arrival parameter
+double lambda_diff_vec[n_lambdas]; // tracks changes in solution
+int tj_map[n_times];			   // map of t to j
+
+double alpha = 0.1; // regularization hyperparameter
 
 namespace
 {
@@ -359,6 +370,79 @@ int *import_transactions(const char *trans_filename, int verbose = 0)
 	return trans_vec;
 }
 
+// import t to j map
+// this maps times to j, which are lambda indexes.
+// the specific mapping functions are done outside of this file
+void import_tj_map(const char *map_filename, int verbose = 0)
+{
+	if (verbose == 1)
+	{
+		std::cout << "Loading map" << std::endl;
+	}
+	// importing csv
+	using namespace boost;
+	std::string data(map_filename);
+	std::ifstream in(data.c_str());
+
+	// error check
+	if (!in.is_open())
+	{
+		std::cout << "ERROR: CSV NOT FOUND" << std::endl;
+		std::exit(1);
+	}
+
+	// declare parsing vars
+	typedef tokenizer<escaped_list_separator<char>> Tokenizer;
+	std::vector<std::string> vec;
+	std::string line;
+	int header_tf = 1; // helper vars to ignore header and index values
+	int index_tf = 1;
+	int row_counter = 0;
+
+	// read line by line
+	while (getline(in, line))
+	{
+		// declare stuff
+		index_tf = 1;
+		Tokenizer tok(line);
+
+		// ignore first line
+		if (header_tf == 1)
+		{
+			header_tf = 0;
+			continue;
+		}
+
+		// iterate over row tokens
+		for (Tokenizer::iterator it(tok.begin()),
+			 end(tok.end());
+			 it != end; ++it)
+		{
+			// skip first value since it's index
+			if (index_tf == 1)
+			{
+				index_tf = 0;
+				continue;
+			}
+			tj_map[row_counter] = std::stoi(*it);
+		}
+		row_counter++;
+
+		// printing progress
+		if (verbose == 1)
+		{
+			if (row_counter % 1000 == 0)
+			{
+				std::cout << row_counter << std::endl;
+			}
+		}
+	}
+	if (verbose == 1)
+	{
+		std::cout << "Done map" << std::endl;
+	}
+}
+
 // build compatible type (mu_t) sets
 // returns mu_matrix: a n_times x n_types matrix
 // each col is a type, each row is a time period
@@ -501,7 +585,7 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec, int v
 	return mu_matrix;
 }
 
-// literally just counts number of purchases
+// helper function, literally just counts number of purchases
 void count_purchases(int *trans_vec)
 {
 	for (int t = 0; t < n_times; t++)
@@ -544,7 +628,7 @@ double **build_cust_type_probs(int **mu_matrix, int verbose = 0)
 
 		for (int i = 0; i < n_types; i++)
 		{
-			sumprob += mu_matrix[t][i] * current_x_vec[i];
+			sumprob += mu_matrix[t][i] * x_vec[i];
 		}
 
 		// update type probability if that type is compatible
@@ -552,7 +636,7 @@ double **build_cust_type_probs(int **mu_matrix, int verbose = 0)
 		{
 			if (mu_matrix[t][i] == 1) // set was compatible, so update this value
 			{
-				p_sigma_matrix[t][i] = current_x_vec[i] / sumprob;
+				p_sigma_matrix[t][i] = x_vec[i] / sumprob;
 			}
 			else
 			{
@@ -604,9 +688,10 @@ void update_arrival_estimates(int *trans_vec, int **mu_matrix, int verbose = 0)
 				double sum_compat_probs = 0; // sum of probabilities of compatible types
 				for (int i = 0; i < n_types; i++)
 				{
-					sum_compat_probs += current_x_vec[i] * mu_matrix[t][i];
+					sum_compat_probs += x_vec[i] * mu_matrix[t][i];
 				}
-				a_vec[t] = (lambda * sum_compat_probs) / (lambda * sum_compat_probs + (1 - lambda));
+				int j = tj_map[t];
+				a_vec[t] = (lambda_vec[j] * sum_compat_probs) / (lambda_vec[j] * sum_compat_probs + (1 - lambda_vec[j]));
 			}
 		}
 	}
@@ -645,146 +730,8 @@ void estimate_m_vec(double **p_sigma_matrix, int verbose = 0)
 	}
 }
 
-// Problem formulated here
-class FG_eval
-{
-public:
-	typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
-	void operator()(ADvector &fg, const ADvector &x)
-	{
-		assert(fg.size() == 2); // 1 LL formula, 1 sum of x constraint, 2*n_types regularization constraints
-		assert(x.size() == n_types + 1);
-
-		// printVector("m_vec:", m_vec, n_types, 4, 5);
-
-		//x[0:n_types) represents type probs, x[n_types] is lambda
-
-		// add type probs to objective
-		for (int i = 0; i < n_types; i++)
-		{
-			fg[0] += m_vec[i] * log(x[i]);
-		}
-		// add lambda terms to objective
-		double sum_ambiguous_a = 0;
-		for (int t = 0; t < n_times; t++)
-		{
-			if (a_vec[t] != 1)
-			{
-				sum_ambiguous_a += a_vec[t];
-			}
-		}
-
-		AD<double> reg_sum = 0;
-		// sum regularization terms
-		for (int i = 0; i < n_types; i++)
-		{
-			reg_sum += pow(x[i], 2);
-		}
-		reg_sum = reg_sum * alpha;
-
-		// main function to optimize
-		fg[0] += (n_purch + sum_ambiguous_a) * log(x[n_types]) + ((n_times - n_purch) - sum_ambiguous_a) * log(1 - x[n_types]) - reg_sum;
-
-		// constraint that sum of x's = 1
-		for (int i = 0; i < n_types; i++)
-		{
-			fg[1] += x[i];
-		}
-
-		return;
-	}
-};
-} // namespace
-
-// m-step optimization
-void m_step()
-{
-	bool ok;
-
-	size_t i;
-	typedef CPPAD_TESTVECTOR(double) Dvector;
-
-	// number of independent variables n_types + 1 extra for lambda + regularizers vars
-	size_t nx = n_types + 1;
-	// number of constraints (range dimension for g)
-	size_t ng = 1;
-	// initial value of the independent variables
-
-	Dvector xi(nx);
-	for (i = 0; i < n_types + 1; i++)
-	{
-		xi[i] = 0.1;
-	}
-
-	// lower and upper limits for x
-	Dvector xl(nx), xu(nx);
-	for (i = 0; i < nx; i++)
-	{
-		xl[i] = 0;
-		xu[i] = 1;
-	}
-
-	// lower and upper limits for g
-	Dvector gl(ng), gu(ng);
-	for (i = 0; i < ng; i++)
-	{
-		gl[i] = 1;
-		gu[i] = 1;
-	}
-
-	// object that computes objective and constraints
-	FG_eval fg_eval;
-
-	// options
-	std::string options;
-	// printing
-	options += "Integer print_level  5\n";
-	options += "String print_timing_statistics  yes\n";
-	// scaling to maximize instead of minimize
-	options += "Numeric obj_scaling_factor   -1\n";
-	// maximum number of iterations
-	options += "Integer max_iter     200\n";
-	// approximate accuracy in first order necessary conditions;
-	// see Mathematical Programming, Volume 106, Number 1,
-	// Pages 25-57, Equation (6)
-	options += "Numeric tol          1e-8\n";
-	// derivative testing
-	options += "String  derivative_test            second-order\n";
-	// maximum amount of random pertubation; e.g.,
-	// when evaluation finite diff
-	options += "Numeric point_perturbation_radius  4.\n";
-
-	// place to return solution
-	CppAD::ipopt::solve_result<Dvector> solution;
-
-	// solve the problem
-	CppAD::ipopt::solve<Dvector, FG_eval>(
-		options, xi, xl, xu, gl, gu, fg_eval, solution);
-	//
-	// Check some of the solution values
-	//
-	ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
-	//
-
-	// printVector("PAST SOLUTION", current_x_vec, n_types, 3, 5);
-	// printVector("NEW SOLUTION", solution.x, n_types, 3, 5);
-
-	// update current optimal x vector and difference vector, as well as lambda
-	for (int i = 0; i < n_types; i++)
-	{
-		x_diff_vec[i] = std::abs(current_x_vec[i] - solution.x[i]);
-		current_x_vec[i] = solution.x[i];
-	}
-	lambda = solution.x[n_types];
-
-	std::cout << "CURRENT OBJECTIVE VALUE: " << solution.obj_value << std::endl;
-	// std::cout << "CURR LAMBDA: " << solution.x[n_types] << std::endl;
-
-	// printVector("DIFFERENCE", x_diff_vec, n_types, 3, 5);
-}
-
-// alternate m_step function for testing
-void closed_form_m_step(double search_bound, int iter_limit, int verbose = 0)
+// closed form solution for type probabilities
+void calc_xi(double search_bound, int iter_limit, int verbose = 0)
 {
 	if (verbose == 1)
 	{
@@ -802,7 +749,7 @@ void closed_form_m_step(double search_bound, int iter_limit, int verbose = 0)
 	while (sum_x <= 1 - 1e-8 || sum_x >= 1 + 1e-8)
 	{
 		sum_x = 0;
-		// calc sum of xi with current lambda
+		// calc sum of xi with current lagrange multiplier
 		for (int i = 0; i < n_types; i++)
 		{
 			temp_x_vec[i] = (-lagm + sqrt(pow(lagm, 2) + 8 * alpha + m_vec[i])) / (4 * alpha);
@@ -842,54 +789,121 @@ void closed_form_m_step(double search_bound, int iter_limit, int verbose = 0)
 	// update x vec using closed form solution
 	for (int i = 0; i < n_types; i++)
 	{
-		x_diff_vec[i] = std::abs(temp_x_vec[i] - current_x_vec[i]);
-		current_x_vec[i] = temp_x_vec[i];
+		x_diff_vec[i] = std::abs(temp_x_vec[i] - x_vec[i]);
+		x_vec[i] = temp_x_vec[i];
 	}
 
-	// calculating objective value
-	// add log type probs to objective
-	double LL = 0;
-	for (int i = 0; i < n_types; i++)
-	{
-		LL += m_vec[i] * log(current_x_vec[i]);
-	}
+	return;
+}
 
-	// calculating sum ambiguous a_t
-	double sum_ambiguous_a = 0;
-	for (int t = 0; t < n_times; t++)
+// solver to optimize lambdas
+class FG_eval
+{
+public:
+	typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
+	void operator()(ADvector &fg, const ADvector &x)
 	{
-		if (a_vec[t] != 1)
+		assert(fg.size() == 1);		   // 1 LL formula
+		assert(x.size() == n_lambdas); // each x is a lambda
+
+		// add type probs and regularization from closed form to LL
+		for (int i = 0; i < n_types; i++)
 		{
-			sum_ambiguous_a += a_vec[t];
+			fg[0] += m_vec[i] * log(x_vec[i]) - alpha * pow(x_vec[i], 2);
 		}
-	}
 
-	// get lambda using closed form solution
-	lambda = (n_purch + sum_ambiguous_a) / n_times;
-	if (lambda == 1)
-	{ // adjusting lambda from 1 in case it happens so that log still works
-		lambda -= 1e-9;
+		// add lambda terms to LL
+		for (int t = 0; t < n_times; t++)
+		{
+			int j = tj_map[t];
+			if (a_vec[t] == 1) // if there was a purchase
+			{
+				fg[0] += log(x[j]);
+			}
+			else
+			{
+				fg[0] += a_vec[t] * log(x[j]) + (1 - a_vec[t]) * log(1 - x[j]);
+			}
+		}
+		return;
 	}
+};
+} // namespace
 
-	// calculating sum of regularization terms
-	double reg_sum = 0;
-	for (int i = 0; i < n_types; i++)
+// m-step optimization
+void optimize_lambdas()
+{
+	bool ok;
+	size_t i;
+	typedef CPPAD_TESTVECTOR(double) Dvector;
+
+	// number of independent variables
+	size_t nx = n_lambdas;
+	// number of constraints (range dimension for g)
+	size_t ng = 0;
+
+	// initial value of the independent variables
+	Dvector xi(nx);
+	for (int j = 0; j < n_lambdas; j++)
 	{
-		reg_sum += pow(current_x_vec[i], 2);
+		xi[j] = 0.5 / n_lambdas;
 	}
-	reg_sum = reg_sum * alpha;
 
-	if (verbose == 1)
+	// lower and upper limits for x
+	Dvector xl(nx), xu(nx);
+	for (int j = 0; j < nx; j++)
 	{
-		std::cout << "Sum ambig a " << sum_ambiguous_a << std::endl;
-		std::cout << "lambda " << lambda << std::endl;
-		std::cout << "reg_sum " << reg_sum << std::endl;
+		xl[j] = 0;
+		xu[j] = 1;
 	}
 
-	// combining in main function
-	LL += (n_purch + sum_ambiguous_a) * lambda + ((n_times - n_purch) - sum_ambiguous_a) * log(1 - lambda) - reg_sum;
+	// lower and upper limits for g
+	Dvector gl(ng), gu(ng);
 
-	std::cout << "CURRENT OBJECTIVE VALUE: " << LL << std::endl;
+	// object that computes objective and constraints
+	FG_eval fg_eval;
+
+	// options
+	std::string options;
+	// printing
+	options += "Integer print_level  5\n";
+	options += "String print_timing_statistics  yes\n";
+	// scaling to maximize instead of minimize
+	options += "Numeric obj_scaling_factor   -1\n";
+	// maximum number of iterations
+	options += "Integer max_iter     200\n";
+	// approximate accuracy in first order necessary conditions;
+	// see Mathematical Programming, Volume 106, Number 1,
+	// Pages 25-57, Equation (6)
+	options += "Numeric tol          1e-8\n";
+	// maximum amount of random pertubation; e.g.,
+	// when evaluation finite diff
+	options += "Numeric point_perturbation_radius  4.\n";
+
+	// place to return solution
+	CppAD::ipopt::solve_result<Dvector> solution;
+
+	// solve the problem
+	CppAD::ipopt::solve<Dvector, FG_eval>(
+		options, xi, xl, xu, gl, gu, fg_eval, solution);
+	//
+	// Check some of the solution values
+	//
+	ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
+	//
+
+	// printVector("PAST SOLUTION", x_vec, n_types, 3, 5);
+	// printVector("NEW SOLUTION", solution.x, n_types, 3, 5);
+
+	// update current lambda vector and difference vector
+	for (int j = 0; j < n_lambdas; j++)
+	{
+		lambda_diff_vec[j] = std::abs(lambda_vec[j] - solution.x[j]);
+		lambda_vec[j] = solution.x[j];
+	}
+
+	std::cout << "CURRENT OBJECTIVE VALUE: " << solution.obj_value << std::endl;
+	// printVector("DIFFERENCE", x_diff_vec, n_types, 3, 5);
 }
 
 // calculates different LL function using equation (2)
@@ -901,7 +915,7 @@ double real_LL(int **mu_matrix)
 		double temp = 0; // temp variable to store xi's for one time period
 		for (int i = 0; i < n_types; i++)
 		{
-			temp += current_x_vec[i] * mu_matrix[t][i];
+			temp += x_vec[i] * mu_matrix[t][i];
 		}
 		temp = log(temp);
 		LL += temp;
@@ -912,10 +926,11 @@ double real_LL(int **mu_matrix)
 int main()
 {
 	// load data and preprocessing
-	int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_1/types_s1.csv");
-	int **avail_matrix = import_availability("../../../data/cabot_data/sprint_1/avail_s1.csv");
-	int *trans_vec = import_transactions("../../../data/cabot_data/sprint_1/trans_s1.csv");
-	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec, 1);
+	int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.8/100000/1/types.csv");
+	int **avail_matrix = import_availability("../../../data/simulated_data/l0.8/100000/1/avail.csv");
+	int *trans_vec = import_transactions("../../../data/simulated_data/l0.8/100000/1/trans.csv");
+	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
+	import_tj_map("tj_map.csv");
 
 	// Data import debugging prints ##################################################
 	{
@@ -923,12 +938,13 @@ int main()
 		printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, 10, 3);
 		printVector("TRANSACTION VECTOR:", trans_vec, 10, 3);
 		printMatrix("MU MATRIX:", mu_matrix, 10, n_types, 3);
+		printVector("TJ MAP:", tj_map, 10, 3);
 	}
 
-	// init: set a_vec to 0 x_vec to 1/N, lambda to 0.5, count purchases
+	// init: set a_vec to 0 x_vec to 1/N, lambdas to 0.5/n_lambdas, count purchases
 	std::fill_n(a_vec, n_times, 0);
-	std::fill_n(current_x_vec, n_types, 1.0 / n_types);
-	lambda = 0.3;
+	std::fill_n(x_vec, n_types, 1.0 / n_types);
+	std::fill_n(lambda_vec, n_lambdas, 0.5 / n_lambdas);
 	count_purchases(trans_vec);
 
 	// std::cout << "NUM_PURCHASES: " << n_purch << std::endl;
@@ -936,32 +952,35 @@ int main()
 	// initialization debugging prints:
 	{
 		// printVector("A_VEC", a_vec, 10, 5);
-		// printVector("current_x_vec", current_x_vec, 10, 5);
+		// printVector("x_vec", x_vec, 10, 5);
 	}
 
 	// EM loop starts here
-	double maxdiff;
+	double maxdiff_x;
+	double maxdiff_lambda;
 	bool done = 0;
 	while (!done)
 	{
 		// E step:
 		// update cust type probs
-		double **p_sigma_matrix = build_cust_type_probs(mu_matrix, 1);
+		double **p_sigma_matrix = build_cust_type_probs(mu_matrix);
 		// update a_t predictions
-		update_arrival_estimates(trans_vec, mu_matrix, 1);
-		estimate_m_vec(p_sigma_matrix, 1);
+		update_arrival_estimates(trans_vec, mu_matrix);
+		estimate_m_vec(p_sigma_matrix);
 
-		// // check that a_vec prediciton works
+		// // check that a_vec prediction works
 		// printVector("A_VEC", a_vec, n_times, 5);
 
 		std::cout << "E-step finished" << std::endl;
 
 		// M step:
-		closed_form_m_step(1e6, 1e6, 1);
+		calc_xi(1e6, 1e6); // closed forms solution for xi
+		optimize_lambdas();
 
 		// find max difference of solution, exit loop if small enough
-		maxdiff = *std::max_element(x_diff_vec, x_diff_vec + n_types);
-		if (maxdiff < 1e-9)
+		maxdiff_x = *std::max_element(x_diff_vec, x_diff_vec + n_types);
+		maxdiff_lambda = *std::max_element(lambda_diff_vec, lambda_diff_vec + n_lambdas);
+		if (maxdiff_x < 1e-4 && maxdiff_lambda < 1e-4)
 		{
 			done = 1;
 		}
@@ -972,25 +991,32 @@ int main()
 		}
 
 		delete[] p_sigma_matrix;
-		// printVector("CURRENT SOLUTION", current_x_vec, n_types, 3, 5);
+		// printVector("CURRENT SOLUTION", x_vec, n_types, 3, 5);
 	}
 	// print final fitted params
-	// printVector("FINAL X_VEC", current_x_vec, n_types, 5, 5);
-	std::cout << "FINAL LAMBDA: " << lambda << std::endl;
+	printVector("FINAL X_VEC", x_vec, n_types, 5, 5);
+	printVector("FINAL LAMBDA_VEC", lambda_vec, n_lambdas, 5, 5);
+	// printVector("FINAL LAMBDAS:", lambda, n_lambdas, 5, 5);
 
-	// save to csv
-	std::ofstream output;
-	output.open("sprint3_results.csv");
-	output << "var, value\n";
-	for (int i = 0; i < n_types; i++)
-	{
-		output << 'x';
-		output << i + 1;
-		output << ',';
-		output << current_x_vec[i];
-		output << '\n';
-	}
-	output << "lambda," << lambda << '\n';
+	// // save to csv
+	// std::ofstream output;
+	// output.open("sprint3_results.csv");
+	// output << "var, value\n";
+	// for (int i = 0; i < n_types; i++)
+	// {
+	// 	output << 'x';
+	// 	output << i + 1;
+	// 	output << ',';
+	// 	output << x_vec[i];
+	// 	output << '\n';
+	// }
+	// for (int j = 0; j < num_lambda; j++){
+	// 	output << 'l';
+	// 	output << j + 1;
+	// 	output << ',';
+	// 	output << lambda[j];
+	// 	output << '\n';
+	// }
 
 	std::cout << "TEST DONE" << std::endl;
 	return 1;
