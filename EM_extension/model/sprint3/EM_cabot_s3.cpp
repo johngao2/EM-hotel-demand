@@ -11,20 +11,15 @@
 #include <boost/tokenizer.hpp>
 #include <cppad/ipopt/solve.hpp>
 
-// // sprint 3 dimensions
-// #define n_times 24219
-// #define n_options 4900
-// #define n_types 4900
+// sprint 3 dimensions
+#define n_times 24219
+#define n_options 4900
+#define n_types 4900
 
 // // sprint 1 dimensions
 // #define n_times 3558100
 // #define n_options 7
 // #define n_types 8
-
-// toy dimensions
-#define n_times 100000 // number of time steps
-#define n_options 15   // number of products
-#define n_types 10	 // number of customer types
 
 // number of different lambdas
 #define n_lambdas 1
@@ -926,11 +921,11 @@ double real_LL(int **mu_matrix)
 int main()
 {
 	// load data and preprocessing
-	int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.8/100000/1/types.csv");
-	int **avail_matrix = import_availability("../../../data/simulated_data/l0.8/100000/1/avail.csv");
-	int *trans_vec = import_transactions("../../../data/simulated_data/l0.8/100000/1/trans.csv");
+	int **sigma_matrix = import_prefs("../../../../data/cabot_data/sprint_3/types_s3.csv");
+	int **avail_matrix = import_availability("../../../../data/cabot_data/sprint_3/avail_s3.csv");
+	int *trans_vec = import_transactions("../../../../data/cabot_data/sprint_3/trans_s3.csv");
 	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
-	import_tj_map("tj_map.csv");
+	import_tj_map("../../../../data/cabot_data/sprint_3/tj_map.csv");
 
 	// Data import debugging prints ##################################################
 	{
