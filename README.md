@@ -65,6 +65,12 @@
   - debug weird negative values
 - implement day of week lambdas as a formula of coefficients and t
 - implement AIC into C++ code for quick stats
+- lambda quality of fit check:
+  - take sum of (lambda * x_i for all compatible types) for each t
+  - aggregate those sums by week
+  - take difference of actual week arrival count and the lambda*xi aggregate (this is our 'residual')
+  - graph residual over time, see if patterns emerge
+  - repeat this with different aggregations, e.g. by month, day of week, etc.
 
 
 ## Other notes:
