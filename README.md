@@ -71,6 +71,7 @@
   - take difference of actual week arrival count and the lambda*xi aggregate (this is our 'residual')
   - graph residual over time, see if patterns emerge
   - repeat this with different aggregations, e.g. by month, day of week, etc.
+- test new lambdas with large scale non-independent choice assumptions
 
 
 ## Other notes:
