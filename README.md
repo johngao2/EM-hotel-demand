@@ -64,7 +64,7 @@
 - implement AIC into C++ code for quick stats **DONE**
 - implement day of week lambdas as a formula of coefficients and d, d=day
   - book_arrive_diffs are aggregated on each d using mean
-  - non-transactions have book_arrive_diffs of 
+  - times with non-transactions have book_arrive_diffs of max(diff_book_arrive) across the entire dataset
 - lambda quality of fit check:
   - take sum of (lambda * x_i for all compatible types) for each t
   - aggregate those sums by week
