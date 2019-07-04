@@ -804,7 +804,7 @@ void optimize_lambdas()
 	// options
 	std::string options;
 	// printing
-	options += "Integer print_level  5\n";
+	options += "Integer print_level  1\n";
 	options += "String print_timing_statistics  yes\n";
 	// scaling to maximize instead of minimize
 	options += "Numeric obj_scaling_factor   -1\n";
@@ -840,7 +840,12 @@ void optimize_lambdas()
 		lambda_vec[j] = solution.x[j];
 	}
 
-	std::cout << "CURRENT OBJECTIVE VALUE: " << solution.obj_value << std::endl;
+	int n_params = n_types + n_lambdas;
+	double AIC = 2 * n_params - 2 * solution.obj_value;
+	double AICC = AIC + (2 * n_params * (n_params + 1)) / (n_times - n_params + 1);
+	std::cout << "LL: " << solution.obj_value << std::endl;
+	std::cout << "AIC: " << AIC << std::endl;
+	std::cout << "AICC: " << AICC << std::endl;
 	// printVector("DIFFERENCE", x_diff_vec, n_types, 3, 5);
 }
 // calculates different LL function using equation (2)
@@ -871,7 +876,7 @@ int main()
 	int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.8/100000/1/types.csv");
 	int **avail_matrix = import_availability("../../../data/simulated_data/l0.8/100000/1/avail.csv");
 	int *trans_vec = import_transactions("../../../data/simulated_data/l0.8/100000/1/trans.csv");
-	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec, 1);
+	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
 
 	// Data import debugging prints ##################################################
 	{
@@ -914,13 +919,13 @@ int main()
 		std::cout << "E-step finished" << std::endl;
 
 		// M step:
-		calc_xi(1e6, 1e6, 1); // closed forms solution for xi
+		calc_xi(1e6, 1e6); // closed forms solution for xi
 		optimize_lambdas();
 
 		// find max difference of solution, exit loop if small enough
 		maxdiff_x = *std::max_element(x_diff_vec, x_diff_vec + n_types);
 		maxdiff_lambda = *std::max_element(lambda_diff_vec, lambda_diff_vec + n_lambdas);
-		if (maxdiff_x < 1e-4 && maxdiff_lambda < 1e-4)
+		if (maxdiff_x < 1 && maxdiff_lambda < 1)
 		{
 			done = 1;
 		}

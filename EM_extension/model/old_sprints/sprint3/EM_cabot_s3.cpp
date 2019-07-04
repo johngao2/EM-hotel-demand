@@ -920,11 +920,11 @@ double real_LL(int **mu_matrix)
 int main()
 {
 	// load data and preprocessing
-	int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_3/types_s3.csv",1);
-	int **avail_matrix = import_availability("../../../data/cabot_data/sprint_3/avail_s3.csv",1);
-	int *trans_vec = import_transactions("../../../data/cabot_data/sprint_3/trans_s3.csv",1);
+	int **sigma_matrix = import_prefs("../../../../data/cabot_data/sprint_3/types_s3.csv",1);
+	int **avail_matrix = import_availability("../../../../data/cabot_data/sprint_3/avail_s3.csv",1);
+	int *trans_vec = import_transactions("../../../../data/cabot_data/sprint_3/trans_s3.csv",1);
 	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec,1);
-	import_tj_map("../../../data/cabot_data/sprint_3/tj_map.csv",1);
+	import_tj_map("../../../../data/cabot_data/sprint_3/tj_map.csv",1);
 
 	// Data import debugging prints ##################################################
 	{
@@ -988,7 +988,7 @@ int main()
 		// printVector("CURRENT SOLUTION", x_vec, n_types, 3, 5);
 	}
 	// print final fitted params
-	printVector("FINAL X_VEC", x_vec, n_types, 5, 5);
+	// printVector("FINAL X_VEC", x_vec, n_types, 5, 5);
 	printVector("FINAL LAMBDA_VEC", lambda_vec, n_lambdas, 5, 5);
 
 	// save to csv

@@ -28,6 +28,7 @@
         - lambda: 
         - RMSE: 0.008960
 
+
 **SPRINT 1 DATA**
     - dataset: 3.5m times, 7 products, 8 types
     - params: alpha 0.1, stopping criteria 1e-3, 
@@ -41,5 +42,8 @@
     - params: alpha 0.1, stopping criteria 1e-9, 
     - Benchmark:
         - too slow, unrunnable
-    - Static t_j map, different lambdas per week:
+    - Closed form:
         - LL: -50089.51
+    - Closed form + weekly lambdas:
+        - LL -59845.03
+        - lambdas: [0.28830, 0.30427, 0.27572, 0.27369, 0.24937, 0.18999, 0.16983]
