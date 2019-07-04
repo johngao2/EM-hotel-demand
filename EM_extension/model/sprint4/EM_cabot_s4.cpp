@@ -16,7 +16,7 @@
 // #define n_options 4900
 // #define n_types 4900
 // // number of different lambdas
-// #define n_lambdas 7
+// #define n_lambda_params 7
 
 // // sprint 1 dimensions
 // #define n_times 3558100
@@ -28,7 +28,7 @@
 #define n_options 15
 #define n_types 10
 // number of different lambdas
-#define n_lambdas 1
+#define n_lambda_params 1
 
 // GLOBAL VARS
 std::string testname = "toy";	  // name for csv files
@@ -37,10 +37,11 @@ double m_vec[n_types];			   // m_vector, counts number of occurences of a type n
 double x_vec[n_types];			   // current solution vector
 double x_diff_vec[n_types];		   // tracks changes in x's
 double a_vec[n_times];			   // a_vector, tracks if there was an arrival in a period
-double lambda_vec[n_lambdas];	  // arrival parameter
-double lambda_diff_vec[n_lambdas]; // tracks changes in solution
+double lambda_param_vec[n_lambda_params];	  // params for calculating lambda
+double lambda_param_diff_vec[n_lambda_params]; // tracks changes in solution
 
 double alpha = 0.1; // regularization hyperparameter
+double stop_criteria = 1e-3; // stopping param
 
 namespace
 {
@@ -620,9 +621,9 @@ void update_arrival_estimates(int *trans_vec, int **mu_matrix, int verbose = 0)
 				}
 				// // advanced lambda
 				// int j = tj_map[t];
-				// a_vec[t] = (lambda_vec[j] * sum_compat_probs) / (lambda_vec[] * sum_compat_probs + (1 - lambda_vec[j]));
+				// a_vec[t] = (lambda_param_vec[j] * sum_compat_probs) / (lambda_param_vec[] * sum_compat_probs + (1 - lambda_param_vec[j]));
 				// simple single lambda
-				a_vec[t] = (lambda_vec[0] * sum_compat_probs) / (lambda_vec[0] * sum_compat_probs + (1 - lambda_vec[0]));
+				a_vec[t] = (lambda_param_vec[0] * sum_compat_probs) / (lambda_param_vec[0] * sum_compat_probs + (1 - lambda_param_vec[0]));
 			}
 		}
 	}
@@ -735,7 +736,7 @@ public:
 	void operator()(ADvector &fg, const ADvector &x)
 	{
 		assert(fg.size() == 1);		   // 1 LL formula
-		assert(x.size() == n_lambdas); // each x is a lambda
+		assert(x.size() == n_lambda_params); // each x is a lambda parameter
 
 		// add type probs and regularization from closed form to LL
 		for (int i = 0; i < n_types; i++)
@@ -776,15 +777,15 @@ void optimize_lambdas()
 	typedef CPPAD_TESTVECTOR(double) Dvector;
 
 	// number of independent variables
-	size_t nx = n_lambdas;
+	size_t nx = n_lambda_params;
 	// number of constraints (range dimension for g)
 	size_t ng = 0;
 
 	// initial value of the independent variables
 	Dvector xi(nx);
-	for (int j = 0; j < n_lambdas; j++)
+	for (int j = 0; j < n_lambda_params; j++)
 	{
-		xi[j] = 0.5 / n_lambdas;
+		xi[j] = 0.5 / n_lambda_params;
 	}
 
 	// lower and upper limits for x
@@ -834,13 +835,13 @@ void optimize_lambdas()
 	// printVector("NEW SOLUTION", solution.x, n_types, 3, 5);
 
 	// update current lambda vector and difference vector
-	for (int j = 0; j < n_lambdas; j++)
+	for (int j = 0; j < n_lambda_params; j++)
 	{
-		lambda_diff_vec[j] = std::abs(lambda_vec[j] - solution.x[j]);
-		lambda_vec[j] = solution.x[j];
+		lambda_param_diff_vec[j] = std::abs(lambda_param_vec[j] - solution.x[j]);
+		lambda_param_vec[j] = solution.x[j];
 	}
 
-	int n_params = n_types + n_lambdas;
+	int n_params = n_types + n_lambda_params;
 	double AIC = 2 * n_params - 2 * solution.obj_value;
 	double AICC = AIC + (2 * n_params * (n_params + 1)) / (n_times - n_params + 1);
 	std::cout << "LL: " << solution.obj_value << std::endl;
@@ -868,14 +869,18 @@ double real_LL(int **mu_matrix)
 int main()
 {
 	// load data and preprocessing
+
 	// // independent demand data
 	// int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_3/types_s3.csv",1);
 	// int **avail_matrix = import_availability("../../../data/cabot_data/sprint_3/avail_s3.csv",1);
 	// int *trans_vec = import_transactions("../../../data/cabot_data/sprint_3/trans_s3.csv",1);
+
 	// toy data
 	int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.8/100000/1/types.csv");
 	int **avail_matrix = import_availability("../../../data/simulated_data/l0.8/100000/1/avail.csv");
 	int *trans_vec = import_transactions("../../../data/simulated_data/l0.8/100000/1/trans.csv");
+
+	// additional preprocessing
 	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
 
 	// Data import debugging prints ##################################################
@@ -889,7 +894,7 @@ int main()
 	// init: set a_vec to 0 x_vec to 1/N, lambdas to 0.5/n_lambdas, count purchases
 	std::fill_n(a_vec, n_times, 0);
 	std::fill_n(x_vec, n_types, 1.0 / n_types);
-	std::fill_n(lambda_vec, n_lambdas, 0.5 / n_lambdas);
+	std::fill_n(lambda_param_vec, n_lambda_params, 0.5 / n_lambda_params);
 	count_purchases(trans_vec);
 
 	// std::cout << "NUM_PURCHASES: " << n_purch << std::endl;
@@ -924,7 +929,7 @@ int main()
 
 		// find max difference of solution, exit loop if small enough
 		maxdiff_x = *std::max_element(x_diff_vec, x_diff_vec + n_types);
-		maxdiff_lambda = *std::max_element(lambda_diff_vec, lambda_diff_vec + n_lambdas);
+		maxdiff_lambda = *std::max_element(lambda_param_diff_vec, lambda_param_diff_vec + n_lambda_params);
 		if (maxdiff_x < 1 && maxdiff_lambda < 1)
 		{
 			done = 1;
@@ -940,7 +945,7 @@ int main()
 	}
 	// print final fitted params
 	printVector("FINAL X_VEC", x_vec, n_types, 5, 5);
-	printVector("FINAL LAMBDA_VEC", lambda_vec, n_lambdas, 5, 5);
+	printVector("FINAL lambda_param_vec", lambda_param_vec, n_lambda_params, 5, 5);
 
 	// save to csv
 	std::ofstream output;
@@ -954,12 +959,12 @@ int main()
 		output << x_vec[i];
 		output << '\n';
 	}
-	for (int j = 0; j < n_lambdas; j++)
+	for (int j = 0; j < n_lambda_params; j++)
 	{
 		output << 'l';
 		output << j + 1;
 		output << ',';
-		output << lambda_vec[j];
+		output << lambda_param_vec[j];
 		output << '\n';
 	}
 

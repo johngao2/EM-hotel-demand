@@ -61,10 +61,10 @@
 - implement day of week lambdas **DONE WITH STATIC MAP**
 
 **Step 3 sprint 4 goals:**
-- add 1 to available rooms everytime avail goes into negatives (should only affect DD room type, of which 2 were added in 2018)
-  - debug weird negative values
-- implement day of week lambdas as a formula of coefficients and t
-- implement AIC into C++ code for quick stats
+- implement AIC into C++ code for quick stats **DONE**
+- implement day of week lambdas as a formula of coefficients and d, d=day
+  - book_arrive_diffs are aggregated on each d using mean
+  - non-transactions have book_arrive_diffs of 
 - lambda quality of fit check:
   - take sum of (lambda * x_i for all compatible types) for each t
   - aggregate those sums by week
@@ -72,7 +72,8 @@
   - graph residual over time, see if patterns emerge
   - repeat this with different aggregations, e.g. by month, day of week, etc.
 - test new lambdas with large scale non-independent choice assumptions
-
+- add 1 to available rooms everytime avail goes into negatives (should only affect DD room type, of which 2 were added in 2018)
+  - debug weird negative values
 
 ## Other notes:
 **Backlog:**
