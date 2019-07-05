@@ -42,7 +42,7 @@ double lambda_param_diff_vec[n_lambda_params]; // tracks changes in solution
 
 double alpha = 0.1; // regularization hyperparameter
 double stop_criteria = 1e-3; // stopping param
-int n_intraday = 81;
+int n_intraday = 81;	// number of intraday periods
 
 namespace
 {
