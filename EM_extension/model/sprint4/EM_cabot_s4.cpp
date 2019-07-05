@@ -11,38 +11,41 @@
 #include <boost/tokenizer.hpp>
 #include <cppad/ipopt/solve.hpp>
 
-// // sprint 3 dimensions
-// #define n_times 24219
-// #define n_options 4900
-// #define n_types 4900
-// // number of different lambdas
-// #define n_lambda_params 7
+// sprint 3 dimensions
+#define n_times 24219
+#define n_options 4900
+#define n_types 4900
+#define n_lambda_params 10 // 6 for days of week + intercept + linear and squared ba_diffs
 
 // // sprint 1 dimensions
 // #define n_times 3558100
 // #define n_options 7
 // #define n_types 8
 
-// toy dimensions
-#define n_times 100000
-#define n_options 15
-#define n_types 10
-// number of different lambdas
-#define n_lambda_params 1
+// // toy dimensions
+// #define n_times 100000
+// #define n_options 15
+// #define n_types 10
+
+// other constants
+double alpha = 0.1;			 // regularization hyperparameter
+double stop_criteria = 1e-3; // stopping param
+int n_intraday = 81;		 // number of intraday periods
 
 // GLOBAL VARS
-std::string testname = "toy";	  // name for csv files
-int n_purch;					   // tracks number total number of purchases
-double m_vec[n_types];			   // m_vector, counts number of occurences of a type n arrival
-double x_vec[n_types];			   // current solution vector
-double x_diff_vec[n_types];		   // tracks changes in x's
-double a_vec[n_times];			   // a_vector, tracks if there was an arrival in a period
+std::string testname = "indep"; // name for csv files
+
+// type probs
+double m_vec[n_types];		// m_vector, counts number of occurences of a type n arrival
+double x_vec[n_types];		// current solution vector
+double x_diff_vec[n_types]; // tracks changes in x's
+int n_purch;				// tracks number total number of purchases
+
+// lambdas
+int n_look_days = n_times / n_intraday;
+double a_vec[n_times];						   // a_vector, tracks if there was an arrival in a period
 double lambda_param_vec[n_lambda_params];	  // params for calculating lambda
 double lambda_param_diff_vec[n_lambda_params]; // tracks changes in solution
-
-double alpha = 0.1; // regularization hyperparameter
-double stop_criteria = 1e-3; // stopping param
-int n_intraday = 81;	// number of intraday periods
 
 namespace
 {
@@ -372,6 +375,7 @@ int *import_transactions(const char *trans_filename, int verbose = 0)
 	}
 	return trans_vec;
 }
+
 // build compatible type (mu_t) sets
 // returns mu_matrix: a n_times x n_types matrix
 // each col is a type, each row is a time period
@@ -513,6 +517,82 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec, int v
 		}
 	}
 	return mu_matrix;
+}
+
+// import ba_diff vector
+// returns a vector that contains the mean book_arrive difference for each look day
+double *import_ba_vec(const char *ba_filename, int verbose = 0)
+{
+	if (verbose == 1)
+	{
+		std::cout << "Loading ba_diffs" << std::endl;
+	}
+	// importing csv
+	using namespace boost;
+	std::string data(ba_filename);
+	std::ifstream in(data.c_str());
+
+	// error check
+	if (!in.is_open())
+	{
+		std::cout << "ERROR: CSV '" << ba_filename << "' NOT FOUND" << std::endl;
+		std::exit(1);
+	}
+
+	// declare parsing vars
+	typedef tokenizer<escaped_list_separator<char>> Tokenizer;
+	std::vector<std::string> vec;
+	std::string line;
+	int header_tf = 1; // helper vars to ignore header and index values
+	int index_tf = 1;
+	int row_counter = 0;
+
+	// vars to store data
+	double *ba_vec = new double[n_look_days];
+
+	// read line by line
+	while (getline(in, line))
+	{
+		// declare stuff
+		index_tf = 1;
+		Tokenizer tok(line);
+
+		// ignore first line
+		if (header_tf == 1)
+		{
+			header_tf = 0;
+			continue;
+		}
+
+		// iterate over row tokens
+		for (Tokenizer::iterator it(tok.begin()),
+			 end(tok.end());
+			 it != end; ++it)
+		{
+			// skip first value since it's index
+			if (index_tf == 1)
+			{
+				index_tf = 0;
+				continue;
+			}
+			ba_vec[row_counter] = std::stoi(*it);
+		}
+		row_counter++;
+
+		// printing progress
+		if (verbose == 1)
+		{
+			if (row_counter % 1000 == 0)
+			{
+				std::cout << row_counter << std::endl;
+			}
+		}
+	}
+	if (verbose == 1)
+	{
+		std::cout << "Done ba vec" << std::endl;
+	}
+	return ba_vec;
 }
 
 // helper function, literally just counts number of purchases
@@ -736,7 +816,7 @@ public:
 	typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
 	void operator()(ADvector &fg, const ADvector &x)
 	{
-		assert(fg.size() == 1);		   // 1 LL formula
+		assert(fg.size() == 1);				 // 1 LL formula
 		assert(x.size() == n_lambda_params); // each x is a lambda parameter
 
 		// add type probs and regularization from closed form to LL
@@ -870,19 +950,19 @@ double real_LL(int **mu_matrix)
 int main()
 {
 	// load data and preprocessing
+	// independent demand data
+	int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_3/types_s3.csv", 1);
+	int **avail_matrix = import_availability("../../../data/cabot_data/sprint_3/avail_s3.csv", 1);
+	int *trans_vec = import_transactions("../../../data/cabot_data/sprint_3/trans_s3.csv", 1);
+	double *ba_vec = import_ba_vec("../../../data/cabot_data/sprint_4/ba_diffs.csv", 1);
 
-	// // independent demand data
-	// int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_3/types_s3.csv",1);
-	// int **avail_matrix = import_availability("../../../data/cabot_data/sprint_3/avail_s3.csv",1);
-	// int *trans_vec = import_transactions("../../../data/cabot_data/sprint_3/trans_s3.csv",1);
-
-	// toy data
-	int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.8/100000/1/types.csv");
-	int **avail_matrix = import_availability("../../../data/simulated_data/l0.8/100000/1/avail.csv");
-	int *trans_vec = import_transactions("../../../data/simulated_data/l0.8/100000/1/trans.csv");
+	// // toy data
+	// int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.8/100000/1/types.csv");
+	// int **avail_matrix = import_availability("../../../data/simulated_data/l0.8/100000/1/avail.csv");
+	// int *trans_vec = import_transactions("../../../data/simulated_data/l0.8/100000/1/trans.csv");
 
 	// additional preprocessing
-	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec);
+	int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec, 1);
 
 	// Data import debugging prints ##################################################
 	{
@@ -890,6 +970,7 @@ int main()
 		printMatrix("AVAILABILITY MATRIX:", avail_matrix, 10, 10, 3);
 		printVector("TRANSACTION VECTOR:", trans_vec, 10, 3);
 		printMatrix("MU MATRIX:", mu_matrix, 10, n_types, 3);
+		printVector("BA VECTOR:", ba_vec, 10, 3);
 	}
 
 	// init: set a_vec to 0 x_vec to 1/N, lambdas to 0.5/n_lambdas, count purchases
@@ -945,7 +1026,7 @@ int main()
 		// printVector("CURRENT SOLUTION", x_vec, n_types, 3, 5);
 	}
 	// print final fitted params
-	printVector("FINAL X_VEC", x_vec, n_types, 5, 5);
+	// printVector("FINAL X_VEC", x_vec, n_types, 5, 5);
 	printVector("FINAL lambda_param_vec", lambda_param_vec, n_lambda_params, 5, 5);
 
 	// save to csv
