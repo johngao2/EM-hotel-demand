@@ -14,6 +14,7 @@
 #define n_options 4900
 #define n_types 4900
 #define n_lambda_params 10 // 6 for days of week + intercept + linear and squared ba_diffs
+#define n_look_days 299    // number of days for current dataset
 
 // // sprint 1 dimensions
 // #define n_times 3558100
@@ -40,7 +41,6 @@ double x_diff_vec[n_types]; // tracks changes in x's
 int n_purch;                // tracks number total number of purchases
 
 // lambdas
-int n_look_days = n_times / n_intraday;
 double ba_vec[n_look_days];
 double a_vec[n_times];                    // a_vector, tracks if there was an arrival in a period
 double lambda_param_vec[n_lambda_params]; // params for calculating lambda
@@ -449,8 +449,8 @@ int **build_mu_mat(int **sigma_matrix, int **avail_matrix, int *trans_vec, int v
 
 // import ba_diff vector
 // returns a vector that contains the mean book_arrive difference for each look
-// day
-double *import_ba_vec(const char *ba_filename, int verbose = 0) {
+// day, and loads it into ba_vec
+void import_ba_vec(const char *ba_filename, int verbose = 0) {
   if (verbose == 1) {
     std::cout << "Loading ba_diffs" << std::endl;
   }
@@ -472,9 +472,6 @@ double *import_ba_vec(const char *ba_filename, int verbose = 0) {
   int header_tf = 1; // helper vars to ignore header and index values
   int index_tf = 1;
   int row_counter = 0;
-
-  // vars to store data
-  double *ba_vec = new double[n_look_days];
 
   // read line by line
   while (getline(in, line)) {
@@ -509,7 +506,6 @@ double *import_ba_vec(const char *ba_filename, int verbose = 0) {
   if (verbose == 1) {
     std::cout << "Done ba vec" << std::endl;
   }
-  return ba_vec;
 }
 
 // helper function, literally just counts number of purchases
@@ -565,6 +561,16 @@ double **build_cust_type_probs(int **mu_matrix, int verbose = 0) {
   return p_sigma_matrix;
 }
 
+// function to get lambda given t from existing params
+double get_lambda(int t) {
+  int d = floor(t / n_intraday);
+  double ba_diff = ba_vec[d];
+  int dow = d % 7;
+  double lambda = lambda_param_vec[0] + lambda_param_vec[1] * ba_diff +
+                  lambda_param_vec[2] * pow(ba_diff, 2) + lambda_param_vec[3 + d];
+  return lambda;
+}
+
 // updates a_t estimates based on compatible types and transaction data
 void update_arrival_estimates(int *trans_vec, int **mu_matrix, int verbose = 0) {
   if (verbose == 1) {
@@ -599,8 +605,8 @@ void update_arrival_estimates(int *trans_vec, int **mu_matrix, int verbose = 0) 
         // a_vec[t] = (lambda_param_vec[j] * sum_compat_probs) /
         // (lambda_param_vec[] * sum_compat_probs + (1 - lambda_param_vec[j]));
         // simple single lambda
-        a_vec[t] = (lambda_param_vec[0] * sum_compat_probs) /
-                   (lambda_param_vec[0] * sum_compat_probs + (1 - lambda_param_vec[0]));
+        a_vec[t] = (get_lambda(t) * sum_compat_probs) /
+                   (get_lambda(t) * sum_compat_probs + (1 - get_lambda(t)));
       }
     }
   }
@@ -688,17 +694,6 @@ void calc_xi(double search_bound, int iter_limit, int verbose = 0) {
   return;
 }
 
-// function to get lambda given t from existing params
-double get_lambda(int t) {
-  int d = floor(t / n_intraday) + 1;
-  double ba_diff = ba_vec[d];
-  int dow = d % 7;
-  int x = 1;
-  lambda = lambda_param_vec[0] + lambda_param_vec[1] * ba_diff +
-           lambda_param_vec[2] * pow(ba_diff, 2) + lambda_param_vec[3 + d];
-  return lambda;
-}
-
 // solver to optimize lambdas
 class FG_eval {
 public:
@@ -713,16 +708,25 @@ public:
     }
 
     // build lambda vector for all t using params
+    AD<double> lambda_temp_vec[n_times];
+    int d;
+    double ba_diff;
+    int dow;
+    for (int t = 0; t < n_times; t++) {
+      d = floor(t / n_intraday);
+      ba_diff = ba_vec[d];
+      dow = d % 7;
+      lambda_temp_vec[t] = x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3 + d];
+    }
 
     // add lambda terms to LL
     // advanced lambda
     for (int t = 0; t < n_times; t++) {
-      int j = tj_map[t];
       if (a_vec[t] == 1) // if there was a purchase
       {
-        fg[0] += log(x[j]);
+        fg[0] += log(lambda_temp_vec[t]);
       } else {
-        fg[0] += a_vec[t] * log(x[j]) + (1 - a_vec[t]) * log(1 - x[j]);
+        fg[0] += a_vec[t] * log(lambda_temp_vec[t]) + (1 - a_vec[t]) * log(1 - lambda_temp_vec[t]);
       }
     }
 
@@ -754,10 +758,6 @@ void optimize_lambdas() {
 
   // lower and upper limits for x
   Dvector xl(nx), xu(nx);
-  for (int j = 0; j < nx; j++) {
-    xl[j] = 0;
-    xu[j] = 1;
-  }
 
   // lower and upper limits for g
   Dvector gl(ng), gu(ng);
@@ -830,8 +830,8 @@ int main() {
   int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_3/types_s3.csv", 1);
   int **avail_matrix = import_availability("../../../data/cabot_data/sprint_3/avail_s3.csv", 1);
   int *trans_vec = import_transactions("../../../data/cabot_data/sprint_3/trans_s3.csv", 1);
-  ba_vec = import_ba_vec("../../../data/cabot_data/sprint_4/ba_diffs.csv",
-                         1); // needs to be global var to access lambdas easily
+  import_ba_vec("../../../data/cabot_data/sprint_4/ba_diffs.csv",
+                1); // needs to be global var to access lambdas easily
 
   // // toy data
   // int **sigma_matrix =
