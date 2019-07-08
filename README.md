@@ -67,6 +67,7 @@
     - times with non-transactions have book_arrive_diffs of max(diff_book_arrive) across the entire dataset **DONE**
     - ba_diffs are aggregated daily using mean **DONE**
     - import new csv into c++ workflow **DONE**
+    - code up lambda(d) function (remember that t//n_intraday = d)
 - lambda quality of fit check:
   - take sum of (lambda * x_i for all compatible types) for each t
   - aggregate those sums by week
