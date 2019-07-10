@@ -13,9 +13,9 @@
 // #define n_times 24219
 // #define n_options 4900
 // #define n_types 4900
-// #define n_lambda_params 10 // 7 for days of week + intercept + linear and squared ba_diffs
-// #define n_look_days 299    // number of days for current dataset
-// #define n_intraday 81         // number of intraday periods
+// #define n_lambda_params 10   // 7 for days of week + intercept + linear and squared ba_diffs
+// #define n_look_days 299      // number of days for current dataset
+// #define n_intraday 81        // number of intraday periods
 
 // // sprint 1 dimensions
 // #define n_times 3558100
@@ -32,7 +32,7 @@
 
 // other constants
 double alpha = 0.1;          // regularization hyperparameter
-double stop_criteria = 1e-3; // stopping param
+double stop_criteria = 1e-1; // stopping param
 
 // GLOBAL VARS
 std::string testname = "toy"; // name for csv files
@@ -711,7 +711,7 @@ public:
 
     // add type probs and regularization from closed form to LL
     for (int i = 0; i < n_types; i++) {
-      fg[0] += m_vec[i] * log(x_vec[i]) - alpha * pow(x_vec[i], 2);
+      fg[0] = m_vec[i] * log(x_vec[i]) - alpha * pow(x_vec[i], 2);
     }
 
     // build lambda vector for all t using params
@@ -723,11 +723,15 @@ public:
       d = floor(t / n_intraday);
       ba_diff = ba_vec[d];
       dow = d % 7;
-      fg[1 + t] = x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3 + dow];
-      lambda_temp_vec[t] = x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3 + dow];
-
       // constraint that each lambda is between 1 and 0
-      std::cout << fg[t] << std::endl;
+      fg[1 + t] = x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2);          // + x[3 + dow];
+      lambda_temp_vec[t] = x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2); // + x[3 + dow];
+
+      std::cout << d << std::endl;
+      std::cout << ba_diff << std::endl;
+      std::cout << dow << std::endl;
+      std::cout << fg[1 + t] << std::endl;
+      std::cout << lambda_temp_vec[t] << std::endl;
     }
 
     // add lambda terms to LL
@@ -740,11 +744,16 @@ public:
         fg[0] += a_vec[t] * log(lambda_temp_vec[t]) + (1 - a_vec[t]) * log(1 - lambda_temp_vec[t]);
       }
     }
+    // // alternate form
+    // for (int t = 0; t < n_times; t++) {
+    //   fg[0] += a_vec[t] * log(lambda_temp_vec[t]) + (1 - a_vec[t]) * log(1 - lambda_temp_vec[t]);
+    // }
 
     // // simple single lambda
     // for (int t = 0; t < n_times; t++) {
     //   fg[0] += a_vec[t] * log(x[0]) + (1 - a_vec[t]) * log(1 - x[0]);
     // }
+
     return;
   }
 };
@@ -752,6 +761,7 @@ public:
 
 // m-step optimization
 void optimize_lambdas() {
+
   bool ok;
   size_t i;
   typedef CPPAD_TESTVECTOR(double) Dvector;
@@ -769,16 +779,14 @@ void optimize_lambdas() {
 
   // lower and upper limits for x
   Dvector xl(nx), xu(nx);
-  // for (int n = 0; n < n_lambda_params; n++) {
-  //   xl[n] = -1;
-  //   xu[n] = 1;
-  // }
+  xl[9] = 0;
+  xu[9] = 0;
 
   // lower and upper limits for g
   Dvector gl(ng), gu(ng);
   for (int t = 0; t < n_times; t++) {
-    gl[t] = 1e-9;
-    gu[t] = 23;
+    gl[t] = 0;
+    gu[t] = 1;
   }
 
   // object that computes objective and constraints
@@ -787,7 +795,7 @@ void optimize_lambdas() {
   // options
   std::string options;
   // printing
-  options += "Integer print_level  1\n";
+  // options += "Integer print_level  0\n";
   options += "String print_timing_statistics  yes\n";
   // scaling to maximize instead of minimize
   options += "Numeric obj_scaling_factor   -1\n";
@@ -797,6 +805,7 @@ void optimize_lambdas() {
   // see Mathematical Programming, Volume 106, Number 1,
   // Pages 25-57, Equation (6)
   options += "Numeric tol          1e-8\n";
+  // options += "String  derivative_test            second-order\n";
   // maximum amount of random pertubation; e.g.,
   // when evaluation finite diff
   options += "Numeric point_perturbation_radius  4.\n";
@@ -910,7 +919,7 @@ int main() {
     maxdiff_x = *std::max_element(x_diff_vec, x_diff_vec + n_types);
     maxdiff_lambda =
         *std::max_element(lambda_param_diff_vec, lambda_param_diff_vec + n_lambda_params);
-    if (maxdiff_x < 1e-3 && maxdiff_lambda < 1e-3) {
+    if (maxdiff_x < stop_criteria && maxdiff_lambda < stop_criteria) {
       done = 1;
     }
 
