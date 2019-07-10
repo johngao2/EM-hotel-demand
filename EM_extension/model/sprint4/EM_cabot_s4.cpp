@@ -9,30 +9,33 @@
 #include <string>
 #include <vector>
 
-// sprint 3 dimensions
-#define n_times 24219
-#define n_options 4900
-#define n_types 4900
-#define n_lambda_params 10 // 6 for days of week + intercept + linear and squared ba_diffs
-#define n_look_days 299    // number of days for current dataset
+// // sprint 3 dimensions
+// #define n_times 24219
+// #define n_options 4900
+// #define n_types 4900
+// #define n_lambda_params 10 // 7 for days of week + intercept + linear and squared ba_diffs
+// #define n_look_days 299    // number of days for current dataset
+// #define n_intraday 81         // number of intraday periods
 
 // // sprint 1 dimensions
 // #define n_times 3558100
 // #define n_options 7
 // #define n_types 8
 
-// // toy dimensions
-// #define n_times 100000
-// #define n_options 15
-// #define n_types 10
+// toy dimensions
+#define n_times 10000
+#define n_options 15
+#define n_types 10
+#define n_lambda_params 10 // 7 for days of week + intercept + linear and squared ba_diffs
+#define n_look_days 100    // number of days for current dataset
+#define n_intraday 100     // number of intraday periods
 
 // other constants
 double alpha = 0.1;          // regularization hyperparameter
 double stop_criteria = 1e-3; // stopping param
-int n_intraday = 81;         // number of intraday periods
 
 // GLOBAL VARS
-std::string testname = "indep"; // name for csv files
+std::string testname = "toy"; // name for csv files
 
 // type probs
 double m_vec[n_types];      // m_vector, counts number of occurences of a type n arrival
@@ -568,6 +571,10 @@ double get_lambda(int t) {
   int dow = d % 7;
   double lambda = lambda_param_vec[0] + lambda_param_vec[1] * ba_diff +
                   lambda_param_vec[2] * pow(ba_diff, 2) + lambda_param_vec[3 + d];
+  if (lambda < 0) {
+    std::cout << "NEGATIVE LAMBDA" << std::endl;
+    exit(1);
+  }
   return lambda;
 }
 
@@ -699,7 +706,7 @@ class FG_eval {
 public:
   typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
   void operator()(ADvector &fg, const ADvector &x) {
-    assert(fg.size() == 1);              // 1 LL formula
+    assert(fg.size() == 1 + n_times);    // 1 LL formula + 1 for each lambda
     assert(x.size() == n_lambda_params); // each x is a lambda parameter
 
     // add type probs and regularization from closed form to LL
@@ -716,7 +723,11 @@ public:
       d = floor(t / n_intraday);
       ba_diff = ba_vec[d];
       dow = d % 7;
-      lambda_temp_vec[t] = x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3 + d];
+      fg[1 + t] = x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3 + dow];
+      lambda_temp_vec[t] = x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3 + dow];
+
+      // constraint that each lambda is between 1 and 0
+      std::cout << fg[t] << std::endl;
     }
 
     // add lambda terms to LL
@@ -748,19 +759,27 @@ void optimize_lambdas() {
   // number of independent variables
   size_t nx = n_lambda_params;
   // number of constraints (range dimension for g)
-  size_t ng = 0;
+  size_t ng = n_times;
 
   // initial value of the independent variables
   Dvector xi(nx);
   for (int j = 0; j < n_lambda_params; j++) {
-    xi[j] = 0.5 / n_lambda_params;
+    xi[j] = 1;
   }
 
   // lower and upper limits for x
   Dvector xl(nx), xu(nx);
+  // for (int n = 0; n < n_lambda_params; n++) {
+  //   xl[n] = -1;
+  //   xu[n] = 1;
+  // }
 
   // lower and upper limits for g
   Dvector gl(ng), gu(ng);
+  for (int t = 0; t < n_times; t++) {
+    gl[t] = 1e-9;
+    gu[t] = 23;
+  }
 
   // object that computes objective and constraints
   FG_eval fg_eval;
@@ -790,6 +809,7 @@ void optimize_lambdas() {
   //
   // Check some of the solution values
   //
+
   ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
   //
 
@@ -827,19 +847,16 @@ double real_LL(int **mu_matrix) {
 int main() {
   // load data and preprocessing
   // independent demand data
-  int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_3/types_s3.csv", 1);
-  int **avail_matrix = import_availability("../../../data/cabot_data/sprint_3/avail_s3.csv", 1);
-  int *trans_vec = import_transactions("../../../data/cabot_data/sprint_3/trans_s3.csv", 1);
-  import_ba_vec("../../../data/cabot_data/sprint_4/ba_diffs.csv",
-                1); // needs to be global var to access lambdas easily
+  // int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_3/types_s3.csv", 1);
+  // int **avail_matrix = import_availability("../../../data/cabot_data/sprint_3/avail_s3.csv", 1);
+  // int *trans_vec = import_transactions("../../../data/cabot_data/sprint_3/trans_s3.csv", 1);
 
   // // toy data
-  // int **sigma_matrix =
-  // import_prefs("../../../data/simulated_data/l0.8/100000/1/types.csv"); int
-  // **avail_matrix =
-  // import_availability("../../../data/simulated_data/l0.8/100000/1/avail.csv");
-  // int *trans_vec =
-  // import_transactions("../../../data/simulated_data/l0.8/100000/1/trans.csv");
+  int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.8/10000/1/types.csv");
+  int **avail_matrix = import_availability("../../../data/simulated_data/l0.8/10000/1/avail.csv");
+  int *trans_vec = import_transactions("../../../data/simulated_data/l0.8/10000/1/trans.csv");
+  import_ba_vec("../../../data/simulated_data/l0.8/10000/1/ba_diffs.csv",
+                1); // needs to be global var to access lambdas easily
 
   // additional preprocessing
   int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec, 1);
@@ -854,11 +871,10 @@ int main() {
     printVector("BA VECTOR:", ba_vec, 10, 3);
   }
 
-  // init: set a_vec to 0 x_vec to 1/N, lambdas to 0.5/n_lambdas, count
-  // purchases
+  // init: set a_vec to 0 x_vec to 1/N, lambdas to 0.5/n_lambdas, count purchases
   std::fill_n(a_vec, n_times, 0);
   std::fill_n(x_vec, n_types, 1.0 / n_types);
-  std::fill_n(lambda_param_vec, n_lambda_params, 0.5 / n_lambda_params);
+  std::fill_n(lambda_param_vec, n_lambda_params, 1 / n_lambda_params);
   count_purchases(trans_vec);
 
   // std::cout << "NUM_PURCHASES: " << n_purch << std::endl;
@@ -894,7 +910,7 @@ int main() {
     maxdiff_x = *std::max_element(x_diff_vec, x_diff_vec + n_types);
     maxdiff_lambda =
         *std::max_element(lambda_param_diff_vec, lambda_param_diff_vec + n_lambda_params);
-    if (maxdiff_x < 1 && maxdiff_lambda < 1) {
+    if (maxdiff_x < 1e-3 && maxdiff_lambda < 1e-3) {
       done = 1;
     }
 
