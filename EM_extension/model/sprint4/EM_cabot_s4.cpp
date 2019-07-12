@@ -724,13 +724,12 @@ public:
       ba_diff = ba_vec[d];
       dow = d % 7;
       // constraint that each lambda is between 1 and 0
-      fg[1 + t] = x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2);          // + x[3 + dow];
-      lambda_temp_vec[t] = x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2); // + x[3 + dow];
+      fg[1 + t] = log(x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3 + dow]);
+      lambda_temp_vec[t] = log(x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3 + dow]);
 
       std::cout << d << std::endl;
       std::cout << ba_diff << std::endl;
       std::cout << dow << std::endl;
-      std::cout << fg[1 + t] << std::endl;
       std::cout << lambda_temp_vec[t] << std::endl;
     }
 
@@ -774,7 +773,7 @@ void optimize_lambdas() {
   // initial value of the independent variables
   Dvector xi(nx);
   for (int j = 0; j < n_lambda_params; j++) {
-    xi[j] = 1;
+    xi[j] = 1 / pow(n_lambda_params, 4);
   }
 
   // lower and upper limits for x
@@ -785,8 +784,8 @@ void optimize_lambdas() {
   // lower and upper limits for g
   Dvector gl(ng), gu(ng);
   for (int t = 0; t < n_times; t++) {
-    gl[t] = 0;
-    gu[t] = 1;
+    gl[t] = 1e-8;
+    gu[t] = 1 - 1e-8;
   }
 
   // object that computes objective and constraints
