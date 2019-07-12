@@ -65,7 +65,7 @@
 - implement lambdas as a formula of coefficients and d, d=day
   - preprocess data and create a file with ba_diffs for each t **DONE**
     - times with non-transactions have book_arrive_diffs of max(diff_book_arrive) across the entire dataset **DONE**
-    - ba_diffs are aggregated daily using mean **DONE**
+    - ba_diffs are aggregated daily using mean, then divided by 7 to represent week differential
     - import new csv into c++ workflow **DONE**
     - code up lambda(d) function (remember that t//n_intraday = d) **DONE BUT WITH TAYLOR ERRORS**
     - do e^formula to find lambda

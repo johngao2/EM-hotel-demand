@@ -727,10 +727,13 @@ public:
       fg[1 + t] = log(x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3 + dow]);
       lambda_temp_vec[t] = log(x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3 + dow]);
 
-      std::cout << d << std::endl;
-      std::cout << ba_diff << std::endl;
-      std::cout << dow << std::endl;
-      std::cout << lambda_temp_vec[t] << std::endl;
+      // std::cout << d << std::endl;
+      // std::cout << ba_diff << std::endl;
+      // std::cout << dow << std::endl;
+      // std::cout << lambda_temp_vec[t] << std::endl;
+      if (lambda_temp_vec[t] <= 0 || lambda_temp_vec[t] >= 1) {
+        std::cout << lambda_temp_vec[t] << std::endl;
+      }
     }
 
     // add lambda terms to LL
@@ -773,7 +776,7 @@ void optimize_lambdas() {
   // initial value of the independent variables
   Dvector xi(nx);
   for (int j = 0; j < n_lambda_params; j++) {
-    xi[j] = 1 / pow(n_lambda_params, 4);
+    xi[j] = 1 / pow(n_lambda_params, 3.2);
   }
 
   // lower and upper limits for x
