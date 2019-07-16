@@ -9,33 +9,33 @@
 #include <string>
 #include <vector>
 
-// // sprint 3 dimensions
-// #define n_times 24219
-// #define n_options 4900
-// #define n_types 4900
-// #define n_lambda_params 10 // 7 for days of week + intercept + linear and squared ba_diffs
-// #define n_look_days 299    // number of days for current dataset
-// #define n_intraday 81      // number of intraday periods
+// sprint 3 dimensions
+#define n_times 24219
+#define n_options 4900
+#define n_types 4900
+#define n_lambda_params 10 // 7 for days of week + intercept + linear and squared ba_diffs
+#define n_look_days 299    // number of days for current dataset
+#define n_intraday 81      // number of intraday periods
 
 // // sprint 1 dimensions
 // #define n_times 3558100
 // #define n_options 7
 // #define n_types 8
 
-// toy dimensions
-#define n_times 10000
-#define n_options 15
-#define n_types 10
-#define n_lambda_params 10 // 7 for days of week + intercept + linear and squared ba_diffs
-#define n_look_days 100    // number of days for current dataset
-#define n_intraday 100     // number of intraday periods
+// // toy dimensions
+// #define n_times 10000
+// #define n_options 15
+// #define n_types 10
+// #define n_lambda_params 10 // 7 for days of week + intercept + linear and squared ba_diffs
+// #define n_look_days 100    // number of days for current dataset
+// #define n_intraday 100     // number of intraday periods
 
 // other constants
 double alpha = 0.1;          // regularization hyperparameter
 double stop_criteria = 1e-9; // stopping param
 
 // GLOBAL VARS
-std::string testname = "toy"; // name for csv files
+std::string testname = "indep"; // name for csv files
 
 // type probs
 double m_vec[n_types];      // m_vector, counts number of occurences of a type n arrival
@@ -781,7 +781,7 @@ void optimize_lambdas() {
   // initial value of the independent variables
   Dvector xi(nx);
   for (int j = 0; j < n_lambda_params; j++) {
-    xi[j] = -1 / pow(n_lambda_params, 2); // / pow(n_lambda_params, 1);
+    xi[j] = -1 / pow(n_lambda_params, 1);
   }
 
   // lower and upper limits for x
@@ -867,18 +867,17 @@ double real_LL(int **mu_matrix) {
 int main() {
   // load data and preprocessing
   // independent demand data
-  // int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_3/types_s3.csv", 1);
-  // int **avail_matrix = import_availability("../../../data/cabot_data/sprint_3/avail_s3.csv", 1);
-  // int *trans_vec = import_transactions("../../../data/cabot_data/sprint_3/trans_s3.csv", 1);
-  // import_ba_vec("../../../data//cabot_data/sprint_4/ba_diffs.csv",
-  //               1);
+  int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_3/types_s3.csv", 1);
+  int **avail_matrix = import_availability("../../../data/cabot_data/sprint_3/avail_s3.csv", 1);
+  int *trans_vec = import_transactions("../../../data/cabot_data/sprint_3/trans_s3.csv", 1);
+  import_ba_vec("../../../data//cabot_data/sprint_4/ba_diffs.csv", 1);
 
   // // toy data
-  int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.2/10000/1/types.csv", 1);
-  int **avail_matrix =
-      import_availability("../../../data/simulated_data/l0.2/10000/1/avail.csv", 1);
-  int *trans_vec = import_transactions("../../../data/simulated_data/l0.2/10000/1/trans.csv", 1);
-  import_ba_vec("../../../data/simulated_data/l0.2/10000/1/ba_diffs.csv", 1);
+  // int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.8/10000/1/types.csv", 1);
+  // int **avail_matrix =
+  //     import_availability("../../../data/simulated_data/l0.8/10000/1/avail.csv", 1);
+  // int *trans_vec = import_transactions("../../../data/simulated_data/l0.8/10000/1/trans.csv", 1);
+  // import_ba_vec("../../../data/simulated_data/l0.8/10000/1/ba_diffs.csv", 1);
 
   // additional preprocessing
   int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec, 1);

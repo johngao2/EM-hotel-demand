@@ -47,3 +47,26 @@
     - Closed form + weekly lambdas:
         - LL -59845.03
         - lambdas: [0.28830, 0.30427, 0.27572, 0.27369, 0.24937, 0.18999, 0.16983]
+
+**SPRINT 4 MODEL**
+**Toy model:**
+- dataset: 10k times, 15 products, 10 types
+    - params: alpha 0.1, stopping criteria 1e-9, 
+    - Without squared ba_diff term: true lambda = 0.2:
+        - LL: -9733.289750064856
+        - AIC: 19504.579500129712
+        - AICC: 19504.579500129712
+    - With squared ba_diff term, true lambda = 0.2:
+        - LL: -9733.363865920181
+        - AIC: 19506.727731840361
+        - AICC: 19506.727731840361
+        - lambdas are generally around 0.22, must be noise
+    - Without squared ba_diff term: true lambda = 0.8:
+        - LL: -20981.075211884545
+        - AIC: 42000.150423769090
+        - AICC: 42000.150423769090
+        - lambdas generally around 0.97
+    - With squared ba_diff term: true lambda = 0.8:
+        - LL: -20977.847581116337
+        - AIC: 41995.695162232674
+        - AICC: 41995.695162232674
