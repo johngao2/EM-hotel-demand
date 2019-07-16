@@ -13,9 +13,9 @@
 // #define n_times 24219
 // #define n_options 4900
 // #define n_types 4900
-// #define n_lambda_params 10   // 7 for days of week + intercept + linear and squared ba_diffs
-// #define n_look_days 299      // number of days for current dataset
-// #define n_intraday 81        // number of intraday periods
+// #define n_lambda_params 10 // 7 for days of week + intercept + linear and squared ba_diffs
+// #define n_look_days 299    // number of days for current dataset
+// #define n_intraday 81      // number of intraday periods
 
 // // sprint 1 dimensions
 // #define n_times 3558100
@@ -26,13 +26,13 @@
 #define n_times 10000
 #define n_options 15
 #define n_types 10
-#define n_lambda_params 10 // 7 for days of week + intercept + linear and squared ba_diffs
-#define n_look_days 100    // number of days for current dataset
-#define n_intraday 100     // number of intraday periods
+#define n_lambda_params 9 // 7 for days of week + intercept + linear and squared ba_diffs
+#define n_look_days 100   // number of days for current dataset
+#define n_intraday 100    // number of intraday periods
 
 // other constants
 double alpha = 0.1;          // regularization hyperparameter
-double stop_criteria = 1e-1; // stopping param
+double stop_criteria = 1e-3; // stopping param
 
 // GLOBAL VARS
 std::string testname = "toy"; // name for csv files
@@ -569,10 +569,11 @@ double get_lambda(int t) {
   int d = floor(t / n_intraday);
   double ba_diff = ba_vec[d];
   int dow = d % 7;
-  double lambda = lambda_param_vec[0] + lambda_param_vec[1] * ba_diff +
-                  lambda_param_vec[2] * pow(ba_diff, 2) + lambda_param_vec[3 + d];
+  double lambda = exp(lambda_param_vec[0] + lambda_param_vec[1] * ba_diff +
+                      lambda_param_vec[2 + d]); // lambda_param_vec[2] * pow(ba_diff, 2)
   if (lambda < 0) {
     std::cout << "NEGATIVE LAMBDA" << std::endl;
+    std::cout << lambda << std::endl;
     exit(1);
   }
   return lambda;
@@ -706,44 +707,50 @@ class FG_eval {
 public:
   typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
   void operator()(ADvector &fg, const ADvector &x) {
-    assert(fg.size() == 1 + n_times);    // 1 LL formula + 1 for each lambda
-    assert(x.size() == n_lambda_params); // each x is a lambda parameter
+    assert(fg.size() == 1 + n_look_days); // 1 LL formula + 1 for each lambda
+    assert(x.size() == n_lambda_params);  // each x is a lambda parameter
 
     // add type probs and regularization from closed form to LL
     for (int i = 0; i < n_types; i++) {
-      fg[0] = m_vec[i] * log(x_vec[i]) - alpha * pow(x_vec[i], 2);
+      fg[0] += m_vec[i] * log(x_vec[i]) - alpha * pow(x_vec[i], 2);
     }
 
     // build lambda vector for all t using params
-    AD<double> lambda_temp_vec[n_times];
+    AD<double> lambda_temp_vec[n_look_days];
     int d;
     double ba_diff;
     int dow;
-    for (int t = 0; t < n_times; t++) {
-      d = floor(t / n_intraday);
+    for (int d = 0; d < n_look_days; d++) {
       ba_diff = ba_vec[d];
       dow = d % 7;
-      // constraint that each lambda is between 1 and 0
-      fg[1 + t] = log(x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3 + dow]);
-      lambda_temp_vec[t] = log(x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3 + dow]);
+      // temporarily ignoring squared term
+      lambda_temp_vec[d] = exp(x[0] + x[1] * ba_diff + x[2 + dow]); // x[2] * pow(ba_diff, 2)
 
-      // std::cout << d << std::endl;
-      // std::cout << ba_diff << std::endl;
-      // std::cout << dow << std::endl;
-      // std::cout << lambda_temp_vec[t] << std::endl;
-      if (lambda_temp_vec[t] <= 0 || lambda_temp_vec[t] >= 1) {
-        std::cout << lambda_temp_vec[t] << std::endl;
-      }
+      // update constraint that each lambda is between 1 and 0 for each day
+      fg[1 + d] = exp(x[0] + x[1] * ba_diff + x[2 + dow]); // x[2] * pow(ba_diff, 2)
+      std::cout << d << std::endl;
+      std::cout << ba_diff << std::endl;
+      std::cout << dow << std::endl;
+      std::cout << lambda_temp_vec[d] << std::endl;
+
+      // if (lambda_temp_vec[t] <= 0 || lambda_temp_vec[t] >= 1) {
+      //   std::cout << lambda_temp_vec[t] << std::endl;
+      //   std::cout << d << std::endl;
+      //   std::cout << ba_diff << std::endl;
+      //   std::cout << dow << std::endl;
+      //   std::cout << lambda_temp_vec[t] << std::endl;
+      // }
     }
 
     // add lambda terms to LL
     // advanced lambda
     for (int t = 0; t < n_times; t++) {
+      d = floor(t / n_intraday);
       if (a_vec[t] == 1) // if there was a purchase
       {
-        fg[0] += log(lambda_temp_vec[t]);
+        fg[0] += log(lambda_temp_vec[d]);
       } else {
-        fg[0] += a_vec[t] * log(lambda_temp_vec[t]) + (1 - a_vec[t]) * log(1 - lambda_temp_vec[t]);
+        fg[0] += a_vec[t] * log(lambda_temp_vec[d]) + (1 - a_vec[t]) * log(1 - lambda_temp_vec[d]);
       }
     }
     // // alternate form
@@ -758,7 +765,7 @@ public:
 
     return;
   }
-};
+}; // namespace
 } // namespace
 
 // m-step optimization
@@ -771,24 +778,28 @@ void optimize_lambdas() {
   // number of independent variables
   size_t nx = n_lambda_params;
   // number of constraints (range dimension for g)
-  size_t ng = n_times;
+  size_t ng = n_look_days;
 
   // initial value of the independent variables
   Dvector xi(nx);
   for (int j = 0; j < n_lambda_params; j++) {
-    xi[j] = 1 / pow(n_lambda_params, 3.2);
+    xi[j] = -1; // / pow(n_lambda_params, 1);
   }
 
   // lower and upper limits for x
   Dvector xl(nx), xu(nx);
-  xl[9] = 0;
-  xu[9] = 0;
+  for (int j = 0; j < n_lambda_params - 1; j++) {
+    xu[j] = 0;
+    xl[j] = -1e9;
+  }
+  xl[n_lambda_params - 1] = 0;
+  xu[n_lambda_params - 1] = 0;
 
   // lower and upper limits for g
   Dvector gl(ng), gu(ng);
-  for (int t = 0; t < n_times; t++) {
-    gl[t] = 1e-8;
-    gu[t] = 1 - 1e-8;
+  for (int d = 0; d < n_look_days; d++) {
+    gl[d] = 1e-8;
+    gu[d] = 1 - 1e-8;
   }
 
   // object that computes objective and constraints
@@ -797,7 +808,7 @@ void optimize_lambdas() {
   // options
   std::string options;
   // printing
-  // options += "Integer print_level  0\n";
+  // options += "Integer print_level  10\n";
   options += "String print_timing_statistics  yes\n";
   // scaling to maximize instead of minimize
   options += "Numeric obj_scaling_factor   -1\n";
@@ -861,13 +872,15 @@ int main() {
   // int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_3/types_s3.csv", 1);
   // int **avail_matrix = import_availability("../../../data/cabot_data/sprint_3/avail_s3.csv", 1);
   // int *trans_vec = import_transactions("../../../data/cabot_data/sprint_3/trans_s3.csv", 1);
+  // import_ba_vec("../../../data//cabot_data/sprint_4/ba_diffs.csv",
+  //               1);
 
   // // toy data
-  int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.8/10000/1/types.csv");
-  int **avail_matrix = import_availability("../../../data/simulated_data/l0.8/10000/1/avail.csv");
-  int *trans_vec = import_transactions("../../../data/simulated_data/l0.8/10000/1/trans.csv");
-  import_ba_vec("../../../data/simulated_data/l0.8/10000/1/ba_diffs.csv",
-                1); // needs to be global var to access lambdas easily
+  int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.2/10000/1/types.csv", 1);
+  int **avail_matrix =
+      import_availability("../../../data/simulated_data/l0.2/10000/1/avail.csv", 1);
+  int *trans_vec = import_transactions("../../../data/simulated_data/l0.2/10000/1/trans.csv", 1);
+  import_ba_vec("../../../data/simulated_data/l0.2/10000/1/ba_diffs.csv", 1);
 
   // additional preprocessing
   int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec, 1);
@@ -921,7 +934,7 @@ int main() {
     maxdiff_x = *std::max_element(x_diff_vec, x_diff_vec + n_types);
     maxdiff_lambda =
         *std::max_element(lambda_param_diff_vec, lambda_param_diff_vec + n_lambda_params);
-    if (maxdiff_x < stop_criteria && maxdiff_lambda < stop_criteria) {
+    if (maxdiff_lambda < stop_criteria) {
       done = 1;
     }
 
@@ -931,10 +944,17 @@ int main() {
 
     delete[] p_sigma_matrix;
     // printVector("CURRENT SOLUTION", x_vec, n_types, 3, 5);
+    // printVector("FINAL lambda_param_vec", lambda_param_vec, n_lambda_params, 5, 5);
   }
   // print final fitted params
   // printVector("FINAL X_VEC", x_vec, n_types, 5, 5);
   printVector("FINAL lambda_param_vec", lambda_param_vec, n_lambda_params, 5, 5);
+
+  // get final lambda vec
+  double final_lambdas[n_look_days];
+  for (int d = 0; d < n_look_days; d++) {
+    final_lambdas[d] = get_lambda(d * n_intraday);
+  }
 
   // save to csv
   std::ofstream output;
@@ -948,10 +968,17 @@ int main() {
     output << '\n';
   }
   for (int j = 0; j < n_lambda_params; j++) {
-    output << 'l';
+    output << "lx";
     output << j + 1;
     output << ',';
     output << lambda_param_vec[j];
+    output << '\n';
+  }
+  for (int d = 0; d < n_look_days; d++) {
+    output << "lambda";
+    output << d + 1;
+    output << ',';
+    output << final_lambdas[d];
     output << '\n';
   }
 
