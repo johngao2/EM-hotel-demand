@@ -26,13 +26,13 @@
 #define n_times 10000
 #define n_options 15
 #define n_types 10
-#define n_lambda_params 9 // 7 for days of week + intercept + linear and squared ba_diffs
-#define n_look_days 100   // number of days for current dataset
-#define n_intraday 100    // number of intraday periods
+#define n_lambda_params 10 // 7 for days of week + intercept + linear and squared ba_diffs
+#define n_look_days 100    // number of days for current dataset
+#define n_intraday 100     // number of intraday periods
 
 // other constants
 double alpha = 0.1;          // regularization hyperparameter
-double stop_criteria = 1e-3; // stopping param
+double stop_criteria = 1e-9; // stopping param
 
 // GLOBAL VARS
 std::string testname = "toy"; // name for csv files
@@ -570,7 +570,7 @@ double get_lambda(int t) {
   double ba_diff = ba_vec[d];
   int dow = d % 7;
   double lambda = exp(lambda_param_vec[0] + lambda_param_vec[1] * ba_diff +
-                      lambda_param_vec[2 + d]); // lambda_param_vec[2] * pow(ba_diff, 2)
+                      lambda_param_vec[2] * pow(ba_diff, 2) + lambda_param_vec[3 + d]);
   if (lambda < 0) {
     std::cout << "NEGATIVE LAMBDA" << std::endl;
     std::cout << lambda << std::endl;
@@ -612,7 +612,6 @@ void update_arrival_estimates(int *trans_vec, int **mu_matrix, int verbose = 0) 
         // int j = tj_map[t];
         // a_vec[t] = (lambda_param_vec[j] * sum_compat_probs) /
         // (lambda_param_vec[] * sum_compat_probs + (1 - lambda_param_vec[j]));
-        // simple single lambda
         a_vec[t] = (get_lambda(t) * sum_compat_probs) /
                    (get_lambda(t) * sum_compat_probs + (1 - get_lambda(t)));
       }
@@ -724,22 +723,21 @@ public:
       ba_diff = ba_vec[d];
       dow = d % 7;
       // temporarily ignoring squared term
-      lambda_temp_vec[d] = exp(x[0] + x[1] * ba_diff + x[2 + dow]); // x[2] * pow(ba_diff, 2)
+      lambda_temp_vec[d] = exp(x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3 + dow]);
 
       // update constraint that each lambda is between 1 and 0 for each day
-      fg[1 + d] = exp(x[0] + x[1] * ba_diff + x[2 + dow]); // x[2] * pow(ba_diff, 2)
-      std::cout << d << std::endl;
-      std::cout << ba_diff << std::endl;
-      std::cout << dow << std::endl;
-      std::cout << lambda_temp_vec[d] << std::endl;
+      fg[1 + d] = exp(x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3 + dow]);
+      // std::cout << d << std::endl;
+      // std::cout << ba_diff << std::endl;
+      // std::cout << dow << std::endl;
+      // std::cout << lambda_temp_vec[d] << std::endl;
 
-      // if (lambda_temp_vec[t] <= 0 || lambda_temp_vec[t] >= 1) {
-      //   std::cout << lambda_temp_vec[t] << std::endl;
-      //   std::cout << d << std::endl;
-      //   std::cout << ba_diff << std::endl;
-      //   std::cout << dow << std::endl;
-      //   std::cout << lambda_temp_vec[t] << std::endl;
-      // }
+      if (lambda_temp_vec[d] <= 0 || lambda_temp_vec[d] >= 1) {
+        std::cout << d << std::endl;
+        std::cout << ba_diff << std::endl;
+        std::cout << dow << std::endl;
+        std::cout << lambda_temp_vec[d] << std::endl;
+      }
     }
 
     // add lambda terms to LL
@@ -783,7 +781,7 @@ void optimize_lambdas() {
   // initial value of the independent variables
   Dvector xi(nx);
   for (int j = 0; j < n_lambda_params; j++) {
-    xi[j] = -1; // / pow(n_lambda_params, 1);
+    xi[j] = -1 / pow(n_lambda_params, 2); // / pow(n_lambda_params, 1);
   }
 
   // lower and upper limits for x
@@ -808,7 +806,7 @@ void optimize_lambdas() {
   // options
   std::string options;
   // printing
-  // options += "Integer print_level  10\n";
+  options += "Integer print_level  0\n";
   options += "String print_timing_statistics  yes\n";
   // scaling to maximize instead of minimize
   options += "Numeric obj_scaling_factor   -1\n";
@@ -934,6 +932,7 @@ int main() {
     maxdiff_x = *std::max_element(x_diff_vec, x_diff_vec + n_types);
     maxdiff_lambda =
         *std::max_element(lambda_param_diff_vec, lambda_param_diff_vec + n_lambda_params);
+    std::cout << std::setprecision(12) << "MAXDIFF" << maxdiff_lambda << std::endl;
     if (maxdiff_lambda < stop_criteria) {
       done = 1;
     }
