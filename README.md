@@ -68,9 +68,7 @@
     - ba_diffs are aggregated daily using mean, then divided by 7 to represent week differential
     - import new csv into c++ workflow **DONE**
     - code up lambda(d) function (remember that t//n_intraday = d) **DONE BUT WITH TAYLOR ERRORS**
-    - do e^formula to find lambda
-      - consider trying new formula without lambda constraints first but with plausible starting values
-    - check if vars are zero, if not assign them
+    - do e^formula to find lambda **DONE**
 - lambda quality of fit check:
   - take sum of (lambda * x_i for all compatible types) for each t
   - aggregate those sums by week
@@ -80,6 +78,9 @@
 - test new lambdas with large scale non-independent choice assumptions
 - add 1 to available rooms everytime avail goes into negatives (should only affect DD room type, of which 2 were added in 2018)
   - debug weird negative values
+- track rate of change of LL
+- test with more subdivisions in a day
+
 
 ## Other notes:
 **Backlog:**
