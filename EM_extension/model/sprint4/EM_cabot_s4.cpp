@@ -872,7 +872,7 @@ int main() {
   int *trans_vec = import_transactions("../../../data/cabot_data/sprint_3/trans_s3.csv", 1);
   import_ba_vec("../../../data//cabot_data/sprint_4/ba_diffs.csv", 1);
 
-  // // toy data
+  // // toy data¿
   // int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.8/10000/1/types.csv", 1);
   // int **avail_matrix =
   //     import_availability("../../../data/simulated_data/l0.8/10000/1/avail.csv", 1);
