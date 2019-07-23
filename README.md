@@ -69,7 +69,7 @@
     - import new csv into c++ workflow **DONE**
     - code up lambda(d) function (remember that t//n_intraday = d) **DONE BUT WITH TAYLOR ERRORS**
     - do e^formula to find lambda **DONE**
-- lambda quality of fit check:
+- lambda quality of fit check: **DONE**
   - take sum of (lambda * x_i for all compatible types) for each t
   - aggregate those sums by week
   - take difference of actual week arrival count and the lambda*xi aggregate (this is our 'residual')
