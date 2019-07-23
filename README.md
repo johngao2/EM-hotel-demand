@@ -70,12 +70,12 @@
     - code up lambda(d) function (remember that t//n_intraday = d) **DONE BUT WITH TAYLOR ERRORS**
     - do e^formula to find lambda **DONE**
 - lambda quality of fit check: **DONE**
-  - take sum of (lambda * x_i for all compatible types) for each t
-  - aggregate those sums by week
-  - take difference of actual week arrival count and the lambda*xi aggregate (this is our 'residual')
-  - graph residual over time, see if patterns emerge
-  - repeat this with different aggregations, e.g. by month, day of week, etc.
+  - take sum of (lambda * x_i for all compatible types) for each t **Not a good residual, used just lambda instead**
+  - aggregate those sums by week, graph residual over time, see if patterns emerge **DONE**
+    - *note: model tends to underpredict early in the year and overpredict later*
+- fix a_t estimation where I accidently used compatible types for purchase, rather than non-purchase
 - test new lambdas with large scale non-independent choice assumptions
+- check if any types appear very infrequently
 - add 1 to available rooms everytime avail goes into negatives (should only affect DD room type, of which 2 were added in 2018)
   - debug weird negative values
 - track rate of change of LL
