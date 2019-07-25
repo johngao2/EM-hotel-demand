@@ -9,32 +9,32 @@
 #include <string>
 #include <vector>
 
-// // sprint 3 dimensions
-// #define n_times 24219
-// #define n_options 4900
-// #define n_types 4900
-// #define n_lambda_params 10 // 7 for days of week + intercept + linear and squared ba_diffs
-// #define n_look_days 299    // number of days for current dataset
-// #define n_intraday 81      // number of intraday periods
-// std::string testname = "indep"; // name for csv files
+// sprint 3 dimensions
+#define n_times 24219
+#define n_options 4900
+#define n_types 4900
+#define n_lambda_params 10      // 7 for days of week + intercept + linear and squared ba_diffs
+#define n_look_days 299         // number of days for current dataset
+#define n_intraday 81           // number of intraday periods
+std::string testname = "indep"; // name for csv files
 
 // // sprint 1 dimensions
 // #define n_times 3558100
 // #define n_options 7
 // #define n_types 8
 
-// toy dimensions
-#define n_times 10000
-#define n_options 15
-#define n_types 10
-#define n_lambda_params 10    // 7 for days of week + intercept + linear and squared ba_diffs
-#define n_look_days 100       // number of days for current dataset
-#define n_intraday 100        // number of intraday periods
-std::string testname = "toy"; // name for csv files
+// // toy dimensions
+// #define n_times 10000
+// #define n_options 15
+// #define n_types 10
+// #define n_lambda_params 10    // 7 for days of week + intercept + linear and squared ba_diffs
+// #define n_look_days 100       // number of days for current dataset
+// #define n_intraday 100        // number of intraday periods
+// std::string testname = "toy"; // name for csv files
 
 // other constants
 double alpha = 0.1;          // regularization hyperparameter
-double stop_criteria = 1e-1; // stopping param
+double stop_criteria = 1e-9; // stopping param
 
 // GLOBAL VARS
 
@@ -850,6 +850,12 @@ void optimize_lambdas() {
   std::cout << "LL: " << solution.obj_value << std::endl;
   std::cout << "AIC: " << AIC << std::endl;
   std::cout << "AICC: " << AICC << std::endl;
+
+  // // store LL
+  std::string ll_filename = "lls_" + testname + ".csv";
+  std::ofstream out(ll_filename, std::ios::app);
+  out << solution.obj_value << "\n";
+
   // printVector("DIFFERENCE", x_diff_vec, n_types, 3, 5);
 }
 // calculates different LL function using equation (2)
@@ -867,21 +873,20 @@ double real_LL(int **mu_matrix) {
 }
 
 int main() {
-  // // load data and preprocessing
-  // // independent demand data
-  // int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_3/types_s3.csv", 1);
-  // int **avail_matrix = import_availability("../../../data/cabot_data/sprint_3/avail_s3.csv", 1);
-  // int *trans_vec = import_transactions("../../../data/cabot_data/sprint_3/trans_s3.csv", 1);
-  // import_ba_vec("../../../data//cabot_data/sprint_4/ba_diffs.csv", 1);
+  // load data and preprocessing
 
-  // toy dataset
-  int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.8/10000/1/types.csv", 1);
-  std::cout << "yeet" << std::endl;
+  // independent demand data
+  int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_3/types_s3.csv", 1);
+  int **avail_matrix = import_availability("../../../data/cabot_data/sprint_3/avail_s3.csv", 1);
+  int *trans_vec = import_transactions("../../../data/cabot_data/sprint_3/trans_s3.csv", 1);
+  import_ba_vec("../../../data//cabot_data/sprint_4/ba_diffs.csv", 1);
 
-  int **avail_matrix =
-      import_availability("../../../data/simulated_data/l0.8/10000/1/avail.csv", 1);
-  int *trans_vec = import_transactions("../../../data/simulated_data/l0.8/10000/1/trans.csv", 1);
-  import_ba_vec("../../../data/simulated_data/l0.8/10000/1/ba_diffs.csv", 1);
+  // // toy dataset
+  // int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.8/10000/1/types.csv", 1);
+  // int **avail_matrix =
+  //     import_availability("../../../data/simulated_data/l0.8/10000/1/avail.csv", 1);
+  // int *trans_vec = import_transactions("../../../data/simulated_data/l0.8/10000/1/trans.csv", 1);
+  // import_ba_vec("../../../data/simulated_data/l0.8/10000/1/ba_diffs.csv", 1);
 
   // additional preprocessing
   int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec, 1);
@@ -902,13 +907,11 @@ int main() {
   std::fill_n(lambda_param_vec, n_lambda_params, 1 / n_lambda_params);
   count_purchases(trans_vec);
 
-  // std::cout << "NUM_PURCHASES: " << n_purch << std::endl;
-
-  // initialization debugging prints:
-  {
-    // printVector("A_VEC", a_vec, 10, 5);
-    // printVector("x_vec", x_vec, 10, 5);
-  }
+  // initialize ll diff csv
+  std::ofstream ll_file;
+  std::string ll_filename = "lls_" + testname + ".csv";
+  ll_file.open(ll_filename);
+  ll_file << "LL\n";
 
   // EM loop starts here
   double maxdiff_x;
@@ -933,9 +936,11 @@ int main() {
 
     // find max difference of solution, exit loop if small enough
     maxdiff_x = *std::max_element(x_diff_vec, x_diff_vec + n_types);
+    // finds largest change in lambda vec
     maxdiff_lambda =
         *std::max_element(lambda_param_diff_vec, lambda_param_diff_vec + n_lambda_params);
     std::cout << std::setprecision(12) << "MAXDIFF" << maxdiff_lambda << std::endl;
+
     if (maxdiff_lambda < stop_criteria) {
       done = 1;
     }
@@ -960,9 +965,9 @@ int main() {
 
   // save to csv
   std::ofstream output;
-  std::string filename = "sprint4_" + testname + ".csv";
-  output.open(filename);
-  output << "var, value\n";
+  std::string result_filename = "sprint4_" + testname + ".csv";
+  output.open(result_filename);
+  output << "var,value\n";
   for (int i = 0; i < n_types; i++) {
     output << 'x';
     output << i + 1;
