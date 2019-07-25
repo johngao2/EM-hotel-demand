@@ -598,6 +598,7 @@ void update_arrival_estimates(int *trans_vec, int **mu_matrix, int verbose = 0) 
     } else {
       int num_compat_types = 0;
       for (int i = 0; i < n_types; i++) {
+        // this row of mu matrix corresponds to types compatible with non-purchase option
         num_compat_types += mu_matrix[t][i];
       }
       if (num_compat_types == 0) // case 2: definitely non-arrival, no compatible types
