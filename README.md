@@ -74,7 +74,7 @@
   - aggregate those sums by week, graph residual over time, see if patterns emerge **DONE**
     - *note: model tends to underpredict early in the year and overpredict later*
 - track rate of change of LL **DONE**
-- check if any types appear very infrequently
+- check if any types appear very infrequently **DONE**
 - add 1 to available rooms everytime avail goes into negatives (should only affect DD room type, of which 2 were added in 2018)
   - debug weird negative values
 - test with more subdivisions in a day
