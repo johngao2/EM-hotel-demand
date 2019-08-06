@@ -11,8 +11,8 @@
 
 // sprint 3 dimensions
 #define n_times 24219
-#define n_options 4900
-#define n_types 4900
+#define n_options 196
+#define n_types 196
 #define n_lambda_params 10      // 7 for days of week + intercept + linear and squared ba_diffs
 #define n_look_days 299         // number of days for current dataset
 #define n_intraday 81           // number of intraday periods
@@ -783,7 +783,7 @@ void optimize_lambdas() {
   // initial value of the independent variables
   Dvector xi(nx);
   for (int j = 0; j < n_lambda_params; j++) {
-    xi[j] = -1 / pow(n_lambda_params, 1);
+    xi[j] = -1 / pow(n_lambda_params, 8);
   }
 
   // lower and upper limits for x
@@ -876,9 +876,9 @@ int main() {
   // load data and preprocessing
 
   // independent demand data
-  int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_3/types_s3.csv", 1);
-  int **avail_matrix = import_availability("../../../data/cabot_data/sprint_3/avail_s3.csv", 1);
-  int *trans_vec = import_transactions("../../../data/cabot_data/sprint_3/trans_s3.csv", 1);
+  int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_5/types_s5.csv", 1);
+  int **avail_matrix = import_availability("../../../data/cabot_data/sprint_5/avail_s5.csv", 1);
+  int *trans_vec = import_transactions("../../../data/cabot_data/sprint_5/trans_s5.csv", 1);
   import_ba_vec("../../../data//cabot_data/sprint_4/ba_diffs.csv", 1);
 
   // // toy dataset
@@ -939,7 +939,7 @@ int main() {
     // finds largest change in lambda vec
     maxdiff_lambda =
         *std::max_element(lambda_param_diff_vec, lambda_param_diff_vec + n_lambda_params);
-    std::cout << std::setprecision(12) << "MAXDIFF" << maxdiff_lambda << std::endl;
+    std::cout << std::setprecision(30) << "MAXDIFF" << maxdiff_lambda << std::endl;
 
     if (maxdiff_lambda < stop_criteria) {
       done = 1;
@@ -965,7 +965,7 @@ int main() {
 
   // save to csv
   std::ofstream output;
-  std::string result_filename = "sprint4_" + testname + ".csv";
+  std::string result_filename = "sprint5_" + testname + ".csv";
   output.open(result_filename);
   output << "var,value\n";
   for (int i = 0; i < n_types; i++) {
