@@ -782,9 +782,13 @@ void optimize_lambdas() {
 
   // initial value of the independent variables
   Dvector xi(nx);
-  for (int j = 0; j < n_lambda_params; j++) {
-    xi[j] = -1 / pow(n_lambda_params, 8);
+  xi[0] = -10;
+  for (int j = 1; j < n_lambda_params; j++) {
+    xi[j] = 0;
   }
+  // for (int j = 0; j < n_lambda_params; j++) {
+  //   xi[j] = -99 / pow(n_lambda_params, 8);
+  // }
 
   // lower and upper limits for x
   Dvector xl(nx), xu(nx);
