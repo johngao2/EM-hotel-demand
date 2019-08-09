@@ -13,24 +13,24 @@
 #define n_times 24219
 #define n_options 4900
 #define n_types 4900
-#define n_lambda_params 10      // 7 for days of week + intercept + linear and squared ba_diffs
+#define n_lambda_params 11      // 7 for days of week + intercept + linear and squared ba_diffs
 #define n_look_days 299         // number of days for current dataset
 #define n_intraday 81           // number of intraday periods
 std::string testname = "indep"; // name for csv files
-
-// // sprint 1 dimensions
-// #define n_times 3558100
-// #define n_options 7
-// #define n_types 8
 
 // // toy dimensions
 // #define n_times 10000
 // #define n_options 15
 // #define n_types 10
-// #define n_lambda_params 10    // 7 for days of week + intercept + linear and squared ba_diffs
+// #define n_lambda_params 11    // 7 for days of week + intercept + linear and squared ba_diffs
 // #define n_look_days 100       // number of days for current dataset
 // #define n_intraday 100        // number of intraday periods
 // std::string testname = "toy"; // name for csv files
+
+// // sprint 1 dimensions
+// #define n_times 3558100
+// #define n_options 7
+// #define n_types 8
 
 // other constants
 double alpha = 0.1;          // regularization hyperparameter
@@ -571,7 +571,8 @@ double get_lambda(int t) {
   double ba_diff = ba_vec[d];
   int dow = d % 7;
   double lambda = exp(lambda_param_vec[0] + lambda_param_vec[1] * ba_diff +
-                      lambda_param_vec[2] * pow(ba_diff, 2) + lambda_param_vec[3 + d]);
+                      lambda_param_vec[2] * pow(ba_diff, 2) + lambda_param_vec[3] * d +
+                      lambda_param_vec[4 + dow]);
   if (lambda < 0) {
     std::cout << "NEGATIVE LAMBDA" << std::endl;
     std::cout << lambda << std::endl;
@@ -725,10 +726,11 @@ public:
       ba_diff = ba_vec[d];
       dow = d % 7;
       // temporarily ignoring squared term
-      lambda_temp_vec[d] = exp(x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3 + dow]);
+      lambda_temp_vec[d] =
+          exp(x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3] * d + x[4 + dow]);
 
       // update constraint that each lambda is between 1 and 0 for each day
-      fg[1 + d] = exp(x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3 + dow]);
+      fg[1 + d] = exp(x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3] * d + x[4 + dow]);
       // std::cout << d << std::endl;
       // std::cout << ba_diff << std::endl;
       // std::cout << dow << std::endl;
