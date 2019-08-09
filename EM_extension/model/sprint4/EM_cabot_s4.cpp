@@ -891,11 +891,11 @@ int main() {
   // import_ba_vec("../../../data//cabot_data/sprint_4/ba_diffs.csv", 1);
 
   // toy dataset
-  int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.2/100000/1/types.csv", 1);
+  int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.8/100000/1/types.csv", 1);
   int **avail_matrix =
-      import_availability("../../../data/simulated_data/l0.2/100000/1/avail.csv", 1);
-  int *trans_vec = import_transactions("../../../data/simulated_data/l0.2/100000/1/trans.csv", 1);
-  import_ba_vec("../../../data/simulated_data/l0.2/100000/1/ba_diffs.csv", 1);
+      import_availability("../../../data/simulated_data/l0.8/100000/1/avail.csv", 1);
+  int *trans_vec = import_transactions("../../../data/simulated_data/l0.8/100000/1/trans.csv", 1);
+  import_ba_vec("../../../data/simulated_data/l0.8/100000/1/ba_diffs.csv", 1);
 
   // additional preprocessing
   int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec, 1);
