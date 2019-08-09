@@ -82,6 +82,9 @@
   - debug weird negative values
 - test with more subdivisions in a day
 - test new lambdas with large scale non-independent choice assumptions
+- check that lambda is treated consistently wrt intraday scaling
+- check that lambda error relative to true lambda is consistent
+- try new features
 
 
 ## Other notes:
