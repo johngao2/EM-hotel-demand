@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-// // sprint 3 dimensions
+// // sprint 4 dimensions
 // #define n_times 24219
 // #define n_options 4900
 // #define n_types 4900
@@ -28,12 +28,12 @@
 // std::string testname = "toy"; // name for csv files
 
 // larger toy dimensions
-#define n_times 100000
+#define n_times 10000
 #define n_options 15
 #define n_types 10
 #define n_lambda_params 10    // 7 for days of week + intercept + linear and squared ba_diffs
 #define n_look_days 100       // number of days for current dataset
-#define n_intraday 1000       // number of intraday periods
+#define n_intraday 100        // number of intraday periods
 std::string testname = "toy"; // name for csv files
 
 // // sprint 1 dimensions
@@ -891,11 +891,11 @@ int main() {
   // import_ba_vec("../../../data//cabot_data/sprint_4/ba_diffs.csv", 1);
 
   // toy dataset
-  int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.8/100000/1/types.csv", 1);
+  int **sigma_matrix = import_prefs("../../../data/simulated_data/l0.8/10000/1/types.csv", 1);
   int **avail_matrix =
-      import_availability("../../../data/simulated_data/l0.8/100000/1/avail.csv", 1);
-  int *trans_vec = import_transactions("../../../data/simulated_data/l0.8/100000/1/trans.csv", 1);
-  import_ba_vec("../../../data/simulated_data/l0.8/100000/1/ba_diffs.csv", 1);
+      import_availability("../../../data/simulated_data/l0.8/10000/1/avail.csv", 1);
+  int *trans_vec = import_transactions("../../../data/simulated_data/l0.8/10000/1/trans.csv", 1);
+  import_ba_vec("../../../data/simulated_data/l0.8/10000/1/ba_diffs.csv", 1);
 
   // additional preprocessing
   int **mu_matrix = build_mu_mat(sigma_matrix, avail_matrix, trans_vec, 1);

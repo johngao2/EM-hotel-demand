@@ -9,10 +9,19 @@
 #include <string>
 #include <vector>
 
-// sprint 3 dimensions
+// // sprint 5 dimensions
+// #define n_times 24219
+// #define n_options 196
+// #define n_types 196
+// #define n_lambda_params 10      // 7 for days of week + intercept + linear and squared ba_diffs
+// #define n_look_days 299         // number of days for current dataset
+// #define n_intraday 81           // number of intraday periods
+// std::string testname = "indep"; // name for csv files
+
+// sprint 4 dimensions
 #define n_times 24219
-#define n_options 196
-#define n_types 196
+#define n_options 4900
+#define n_types 4900
 #define n_lambda_params 10      // 7 for days of week + intercept + linear and squared ba_diffs
 #define n_look_days 299         // number of days for current dataset
 #define n_intraday 81           // number of intraday periods
@@ -708,8 +717,8 @@ class FG_eval {
 public:
   typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
   void operator()(ADvector &fg, const ADvector &x) {
-    assert(fg.size() == 1 + n_look_days); // 1 LL formula + 1 for each lambda
-    assert(x.size() == n_lambda_params);  // each x is a lambda parameter
+    assert(fg.size() == 1);              // 1 LL formula, no need for constraint formulas
+    assert(x.size() == n_lambda_params); // each x is a lambda parameter
 
     // add type probs and regularization from closed form to LL
     for (int i = 0; i < n_types; i++) {
@@ -724,15 +733,7 @@ public:
     for (int d = 0; d < n_look_days; d++) {
       ba_diff = ba_vec[d];
       dow = d % 7;
-      // temporarily ignoring squared term
       lambda_temp_vec[d] = exp(x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3 + dow]);
-
-      // update constraint that each lambda is between 1 and 0 for each day
-      fg[1 + d] = exp(x[0] + x[1] * ba_diff + x[2] * pow(ba_diff, 2) + x[3 + dow]);
-      // std::cout << d << std::endl;
-      // std::cout << ba_diff << std::endl;
-      // std::cout << dow << std::endl;
-      // std::cout << lambda_temp_vec[d] << std::endl;
 
       if (lambda_temp_vec[d] <= 0 || lambda_temp_vec[d] >= 1) {
         std::cout << d << std::endl;
@@ -778,7 +779,7 @@ void optimize_lambdas() {
   // number of independent variables
   size_t nx = n_lambda_params;
   // number of constraints (range dimension for g)
-  size_t ng = n_look_days;
+  size_t ng = 0;
 
   // initial value of the independent variables
   Dvector xi(nx);
@@ -793,7 +794,7 @@ void optimize_lambdas() {
   // lower and upper limits for x
   Dvector xl(nx), xu(nx);
   for (int j = 0; j < n_lambda_params - 1; j++) {
-    xu[j] = 0;
+    xu[j] = -1e-9;
     xl[j] = -1e9;
   }
   xl[n_lambda_params - 1] = 0;
@@ -801,10 +802,6 @@ void optimize_lambdas() {
 
   // lower and upper limits for g
   Dvector gl(ng), gu(ng);
-  for (int d = 0; d < n_look_days; d++) {
-    gl[d] = 1e-8;
-    gu[d] = 1 - 1e-8;
-  }
 
   // object that computes objective and constraints
   FG_eval fg_eval;
@@ -880,9 +877,9 @@ int main() {
   // load data and preprocessing
 
   // independent demand data
-  int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_5/types_s5.csv", 1);
-  int **avail_matrix = import_availability("../../../data/cabot_data/sprint_5/avail_s5.csv", 1);
-  int *trans_vec = import_transactions("../../../data/cabot_data/sprint_5/trans_s5.csv", 1);
+  int **sigma_matrix = import_prefs("../../../data/cabot_data/sprint_3/types_s3.csv", 1);
+  int **avail_matrix = import_availability("../../../data/cabot_data/sprint_3/avail_s3.csv", 1);
+  int *trans_vec = import_transactions("../../../data/cabot_data/sprint_3/trans_s3.csv", 1);
   import_ba_vec("../../../data//cabot_data/sprint_4/ba_diffs.csv", 1);
 
   // // toy dataset
