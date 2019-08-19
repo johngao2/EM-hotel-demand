@@ -80,6 +80,7 @@
 - try it with types that are only day of week **DONE**
 - add 1 to available rooms everytime avail goes into negatives (should only affect DD room type, of which 2 were added in 2018)
   - debug weird negative values
+- try with constraints directly on x's **DONE, SAME BIAS**
 - test with more subdivisions in a day
 - test new lambdas with large scale non-independent choice assumptions
 - check that lambda is treated consistently wrt intraday scaling
